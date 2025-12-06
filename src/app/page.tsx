@@ -56,9 +56,9 @@ export default async function Home() {
   ]
 
   const externalLinks = [
-    { name: 'Discord', url: '#', IconComponent: MessageCircle, color: '#5865F2' },
-    { name: 'X (Twitter)', url: '#', IconComponent: Twitter, color: '#1DA1F2' },
-    { name: 'TikTok', url: '#', IconComponent: Music, color: '#EE1D52' },
+    { name: 'Discord', url: 'https://discord.gg/3fvQkUFf', IconComponent: MessageCircle, color: '#5865F2' },
+    // { name: 'X (Twitter)', url: '#', IconComponent: Twitter, color: '#1DA1F2' },
+    // { name: 'TikTok', url: '#', IconComponent: Music, color: '#EE1D52' },
   ]
 
   return (
@@ -132,59 +132,82 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {placeholderNews.map((news) => (
-              <div
-                key={news.id}
-                className="backdrop-blur-md rounded-lg shadow-xl p-6 transition-all hover:scale-105 cursor-pointer"
-                style={{
-                  backgroundColor: 'rgba(15, 15, 15, 0.8)',
-                  border: '2px solid #CC933B',
-                }}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <span
-                    className="text-xs px-2 py-1 rounded"
+            {placeholderNews.length > 0 ? (
+              placeholderNews.map((news) => (
+                <div
+                  key={news.id}
+                  className="backdrop-blur-md rounded-lg shadow-xl p-6 transition-all hover:scale-105 cursor-pointer"
+                  style={{
+                    backgroundColor: 'rgba(15, 15, 15, 0.8)',
+                    border: '2px solid #CC933B',
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className="text-xs px-2 py-1 rounded"
+                      style={{
+                        backgroundColor: 'rgba(204, 147, 59, 0.2)',
+                        color: '#CC933B',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {news.category}
+                    </span>
+                    <span
+                      className="text-xs"
+                      style={{
+                        color: '#ededed',
+                        fontFamily: 'Rajdhani, sans-serif',
+                      }}
+                    >
+                      <Calendar className="w-3 h-3 inline mr-1" />
+                      {news.date}
+                    </span>
+                  </div>
+                  <h3
+                    className="text-lg font-bold mb-2"
                     style={{
-                      backgroundColor: 'rgba(204, 147, 59, 0.2)',
+                      fontFamily: 'Rajdhani, sans-serif',
                       color: '#CC933B',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 'bold',
                     }}
                   >
-                    {news.category}
-                  </span>
-                  <span
-                    className="text-xs"
+                    {news.title}
+                  </h3>
+                  <p
+                    className="text-sm"
                     style={{
-                      color: '#ededed',
                       fontFamily: 'Rajdhani, sans-serif',
+                      color: '#ededed',
+                      lineHeight: '1.6',
                     }}
                   >
-                    <Calendar className="w-3 h-3 inline mr-1" />
-                    {news.date}
-                  </span>
+                    {news.excerpt}
+                  </p>
                 </div>
-                <h3
-                  className="text-lg font-bold mb-2"
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p
+                  className="text-xl font-bold"
                   style={{
                     fontFamily: 'Rajdhani, sans-serif',
                     color: '#CC933B',
                   }}
                 >
-                  {news.title}
-                </h3>
+                  Próximamente
+                </p>
                 <p
-                  className="text-sm"
+                  className="text-sm mt-2"
                   style={{
                     fontFamily: 'Rajdhani, sans-serif',
                     color: '#ededed',
-                    lineHeight: '1.6',
                   }}
                 >
-                  {news.excerpt}
+                  Nuevas noticias y eventos del clan estarán disponibles pronto
                 </p>
               </div>
-            ))}
+            )}
           </div>
         </section>
 
