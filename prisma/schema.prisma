@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -16,7 +17,7 @@ model User {
   habboNameLower String  @unique // Nombre en minúsculas para unicidad
   password      String
   ipAddress     String   // IP capturada solo durante el registro
-  rankId        Int      @default(10) // Default: Sombra aprendiz
+  rankId        Int      @default(13) // Default: Sombra Aprendiz (nuevo sistema de 13 rangos)
   isSovereign   Boolean  @default(false) // Es soberano de su rango
   avatarUrl     String
   createdAt     DateTime @default(now())

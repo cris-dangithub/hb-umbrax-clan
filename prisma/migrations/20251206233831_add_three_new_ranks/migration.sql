@@ -1,0 +1,17 @@
+/*
+  Warnings:
+
+  - The values [USER_RANK_BOSS_ASSIGNED,USER_RANK_BOSS_REMOVED] on the enum `AuditAction` will be removed. If these variants are still used in the database, this will fail.
+
+*/
+-- AlterEnum
+BEGIN;
+CREATE TYPE "AuditAction_new" AS ENUM ('USER_RANK_CHANGED', 'USER_SOVEREIGN_ASSIGNED', 'USER_SOVEREIGN_REMOVED', 'USER_DELETED', 'PROMOTION_REQUEST_CREATED', 'PROMOTION_REQUEST_APPROVED', 'PROMOTION_REQUEST_REJECTED', 'USER_LOGIN', 'USER_REGISTERED', 'TIME_REQUEST_CREATED', 'TIME_REQUEST_APPROVED', 'TIME_REQUEST_REJECTED', 'TIME_SESSION_CLOSED', 'TIME_SUPERVISOR_TRANSFERRED', 'TIME_REQUEST_EXPIRED');
+ALTER TABLE "AuditLog" ALTER COLUMN "action" TYPE "AuditAction_new" USING ("action"::text::"AuditAction_new");
+ALTER TYPE "AuditAction" RENAME TO "AuditAction_old";
+ALTER TYPE "AuditAction_new" RENAME TO "AuditAction";
+DROP TYPE "AuditAction_old";
+COMMIT;
+
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "rankId" SET DEFAULT 13;
