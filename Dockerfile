@@ -35,6 +35,7 @@ COPY . .
 # Variables de entorno para el build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DOCKER_BUILD=true
 
 # Build con output standalone
 RUN npm run build

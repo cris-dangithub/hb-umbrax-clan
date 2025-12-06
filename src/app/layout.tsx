@@ -3,6 +3,9 @@ import "./globals.css";
 import { getCurrentUser } from '@/lib/get-current-user'
 import ClientLayout from '@/components/ClientLayout'
 
+// Forzar renderizado dinámico para toda la app (usa cookies/sessions)
+export const dynamic = 'force-dynamic'
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

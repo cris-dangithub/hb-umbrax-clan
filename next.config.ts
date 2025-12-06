@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Habilitar output standalone para Docker
-  output: 'standalone',
+  // Output standalone solo para Docker, no para Vercel
+  // Vercel detecta automáticamente y usa su propio sistema
+  ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
   
   // Permitir imágenes de Habbo Hotel
   images: {

@@ -36,7 +36,10 @@ export async function getCurrentUser(): Promise<UserWithRank | null> {
 
     return user
   } catch (error) {
-    console.error('Error obteniendo usuario actual:', error)
+    // Solo logear errores reales de BD, no los de cookies durante build
+    if (process.env.NODE_ENV !== 'production' || (error as Error).message?.includes('prisma')) {
+      console.error('Error obteniendo usuario actual:', error)
+    }
     return null
   }
 }
