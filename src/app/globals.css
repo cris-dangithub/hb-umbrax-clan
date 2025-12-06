@@ -1,26 +1,278 @@
+/* ============================================
+   UMBRAX CLAN - Fuentes Personalizadas
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
+/* ============================================
+   Variables de Color y Tema NOVAX
+   ============================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colores principales del clan */
+  --color-blood: #4A0C11;
+  --color-gold: #CC933B;
+  --color-void: #0f0f0f;
+  --color-blood-light: #6B1219;
+  
+  /* Background y foreground */
+  --background: #0f0f0f;
+  --foreground: #ededed;
+  
+  /* ========================================
+     🔴 FILTRO DE VIDEO FOG - AJUSTABLE
+     ======================================== */
+  --video-fog-red-overlay: 0.15; /* Intensidad del overlay rojo (0.0 - 1.0) */
+  
+  /* Fuentes */
+  --font-pixel: "Press Start 2P", cursive;
+  --font-body: "Rajdhani", sans-serif;
 }
 
+/* ============================================
+   Configuración de Tema para Tailwind v4
+   ============================================ */
 @theme inline {
+  /* Colores personalizados */
+  --color-blood: #4A0C11;
+  --color-gold: #CC933B;
+  --color-void: #0f0f0f;
+  --color-blood-light: #6B1219;
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  /* Tipografías */
+  --font-pixel: var(--font-pixel);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ============================================
+   Estilos Base del Body
+   ============================================ */
 body {
-  background: var(--background);
+  background: var(--color-void);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 400;
+  position: relative;
+  overflow-x: hidden;
 }
+
+/* ============================================
+   VIDEO FOG BACKGROUND WITH FALLBACK - COMENTADO
+   ============================================ */
+
+/* Video fog principal con lazy loading */
+/* .video-fog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999;
+  mix-blend-mode: screen;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.video-fog.loaded {
+  opacity: 1;
+}
+
+/* Overlay rojo sobre el video fog */
+/* .video-fog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1000;
+  background: rgba(74, 12, 17, var(--video-fog-red-overlay));
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.video-fog-overlay.loaded {
+  opacity: 1;
+} */
+
+/* Fallback CSS fog cuando video no disponible */
+/* .css-fog-fallback::before,
+.css-fog-fallback::after {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  pointer-events: none;
+  z-index: 999;
+  mix-blend-mode: screen;
+}
+
+.css-fog-fallback::before {
+  background: 
+    radial-gradient(ellipse 300px 200px at 15% 25%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 35%, transparent 65%),
+    radial-gradient(ellipse 250px 350px at 75% 65%, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 35%, transparent 65%);
+  animation: fogDrift1 25s ease-in-out infinite;
+}
+
+.css-fog-fallback::after {
+  background: 
+    radial-gradient(ellipse 260px 300px at 65% 20%, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.008) 35%, transparent 65%),
+    radial-gradient(ellipse 220px 180px at 35% 80%, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.014) 35%, transparent 65%);
+  animation: fogDrift2 35s ease-in-out infinite;
+}
+
+@keyframes fogDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 20px) scale(1.05); }
+}
+
+@keyframes fogDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(25px, -15px) scale(0.95); }
+} */
+
+/* Optimización móvil - solo CSS fog en dispositivos pequeños - COMENTADO */
+/* @media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .video-fog {
+    display: none;
+  }
+  
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    pointer-events: none;
+    z-index: 999;
+    mix-blend-mode: screen;
+  }
+  
+  body::before {
+    background: radial-gradient(ellipse 200px 150px at 20% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+    animation: fogDrift1 25s ease-in-out infinite;
+  }
+  
+  body::after {
+    background: radial-gradient(ellipse 180px 120px at 70% 70%, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
+    animation: fogDrift2 35s ease-in-out infinite;
+  }
+} */
+
+/* ============================================
+   Clases Utility de Glassmorphism
+   ============================================ */
+.glass-dark {
+  background: rgba(15, 15, 15, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-blood {
+  background: rgba(74, 12, 17, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.border-gold {
+  border-color: var(--color-gold);
+}
+
+.text-gold {
+  color: var(--color-gold);
+}
+
+.text-blood {
+  color: var(--color-blood);
+}
+
+.bg-blood {
+  background-color: var(--color-blood);
+}
+
+.bg-gold {
+  background-color: var(--color-gold);
+}
+
+.bg-void {
+  background-color: var(--color-void);
+}
+
+/* ============================================
+   Efectos de Sombra Pixel-Art
+   ============================================ */
+.pixel-glow-gold {
+  text-shadow: 0 0 10px rgba(204, 147, 59, 0.5);
+}
+
+.pixel-shadow-gold {
+  box-shadow: 0 0 20px rgba(204, 147, 59, 0.3);
+}
+
+/* ============================================
+   Botones estilo Habbo Clásico
+   ============================================ */
+.btn-habbo {
+  background: var(--color-gold);
+  color: #000;
+  font-family: var(--font-body);
+  font-weight: 700;
+  border: 2px solid var(--color-gold);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-habbo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(204, 147, 59, 0.5);
+}
+
+.btn-habbo:active {
+  transform: scale(0.98);
+}
+
+.btn-habbo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
+   Custom Scrollbar for Modals
+   ============================================ */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CC933B rgba(15, 15, 15, 0.5);
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 15, 15, 0.5);
+  border-radius: 4px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: #CC933B;
+  border-radius: 4px;
+  border: 2px solid rgba(15, 15, 15, 0.5);
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #E5A94D;
+}
+

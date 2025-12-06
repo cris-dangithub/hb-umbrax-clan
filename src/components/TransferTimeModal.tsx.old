@@ -1,0 +1,252 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { X, Loader2, ArrowRightLeft } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import HabboAvatar from './HabboAvatar'
+
+interface User {
+  id: string
+  habboName: string
+  avatarUrl: string
+  rank: {
+    name: string
+    order: number
+  }
+  isSovereign: boolean
+}
+
+interface TransferTimeModalProps {
+  session: {
+    id: string
+    subjectUser: {
+      habboName: string
+      avatarUrl: string
+    }
+    currentSupervisor: {
+      id: string
+      habboName: string
+    } | null
+  }
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export default function TransferTimeModal({ session, onClose, onSuccess }: TransferTimeModalProps) {
+  const [supervisors, setSupervisors] = useState<User[]>([])
+  const [selectedSupervisor, setSelectedSupervisor] = useState<string>('')
+  const [notes, setNotes] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    // Fetch usuarios que pueden ser supervisores (Cúpula + Soberanos)
+    const fetchSupervisors = async () => {
+      try {
+        const response = await fetch('/api/admin/users?limit=100')
+        if (response.ok) {
+          const data = await response.json()
+          const eligibleSupervisors = data.data.filter((user: User) => {
+            const isCupula = user.rank.order <= 3
+            const isSovereign = user.isSovereign
+            return (isCupula || isSovereign) && user.id !== session.currentSupervisor?.id
+          })
+          setSupervisors(eligibleSupervisors)
+        }
+      } catch (error) {
+        console.error('Error fetching supervisors:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSupervisors()
+  }, [session.currentSupervisor?.id])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedSupervisor) return
+
+    setSubmitting(true)
+    try {
+      const response = await fetch(`/api/admin/time-sessions/${session.id}/transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newSupervisorId: selectedSupervisor,
+          notes: notes.trim() || undefined,
+        }),
+      })
+
+      if (response.ok) {
+        onSuccess()
+        onClose()
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Error al transferir supervisor')
+      }
+    } catch (error) {
+      console.error('Error transferring supervisor:', error)
+      alert('Error al transferir supervisor')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      onClick={onClose}
+    >
+      <div
+        className="backdrop-blur-md rounded-lg shadow-2xl w-full max-w-2xl"
+        style={{
+          backgroundColor: 'rgba(15, 15, 15, 0.95)',
+          border: '2px solid #CC933B',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex justify-between items-center p-6 border-b"
+          style={{ borderColor: '#CC933B' }}
+        >
+          <div className="flex items-center gap-3">
+            <ArrowRightLeft size={24} style={{ color: '#CC933B' }} />
+            <h2 className="text-2xl font-bold" style={{ color: '#CC933B' }}>
+              Transferir Supervisor
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="transition-all hover:opacity-70"
+            style={{ color: '#CC933B' }}
+          >
+            <X size={28} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-6">
+            <p style={{ color: 'rgba(204, 147, 59, 0.9)' }}>
+              Transfiriendo supervisión del súbdito:{' '}
+              <span className="font-bold" style={{ color: '#CC933B' }}>
+                {session.subjectUser.habboName}
+              </span>
+            </p>
+            {session.currentSupervisor && (
+              <p className="mt-2" style={{ color: 'rgba(204, 147, 59, 0.7)' }}>
+                Supervisor actual: {session.currentSupervisor.habboName}
+              </p>
+            )}
+          </div>
+
+          {/* Selector de supervisor */}
+          <div className="mb-6">
+            <label className="block mb-2 font-medium" style={{ color: '#CC933B' }}>
+              Nuevo Supervisor *
+            </label>
+            {loading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="animate-spin" size={24} style={{ color: '#CC933B' }} />
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {supervisors.map(supervisor => (
+                  <label
+                    key={supervisor.id}
+                    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all"
+                    style={{
+                      backgroundColor: selectedSupervisor === supervisor.id 
+                        ? 'rgba(204, 147, 59, 0.2)' 
+                        : 'rgba(74, 12, 17, 0.3)',
+                      border: selectedSupervisor === supervisor.id 
+                        ? '2px solid #CC933B' 
+                        : '1px solid rgba(204, 147, 59, 0.3)',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="supervisor"
+                      value={supervisor.id}
+                      checked={selectedSupervisor === supervisor.id}
+                      onChange={(e) => setSelectedSupervisor(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <HabboAvatar 
+                      src={supervisor.avatarUrl}
+                      alt={supervisor.habboName}
+                      size={50}
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold" style={{ color: '#CC933B' }}>
+                        {supervisor.habboName}
+                      </p>
+                      <p className="text-sm" style={{ color: 'rgba(204, 147, 59, 0.7)' }}>
+                        {supervisor.rank.name}
+                        {supervisor.isSovereign && ' (Soberano)'}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Notas opcionales */}
+          <div className="mb-6">
+            <label className="block mb-2 font-medium" style={{ color: '#CC933B' }}>
+              Notas (opcional)
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Razón de la transferencia..."
+              rows={3}
+              className="w-full px-4 py-3 rounded-lg border-2 bg-transparent transition-all"
+              style={{
+                borderColor: '#CC933B',
+                color: '#CC933B',
+              }}
+            />
+          </div>
+
+          {/* Botones */}
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 rounded-lg font-medium transition-all"
+              style={{
+                backgroundColor: 'rgba(204, 147, 59, 0.1)',
+                border: '2px solid #CC933B',
+                color: '#CC933B',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={!selectedSupervisor || submitting}
+              className="flex-1 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50"
+              style={{
+                backgroundColor: '#CC933B',
+                color: '#0f0f0f',
+              }}
+            >
+              {submitting ? (
+                <Loader2 className="animate-spin mx-auto" size={24} />
+              ) : (
+                'Transferir'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+
+  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null
+}

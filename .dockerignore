@@ -1,0 +1,46 @@
+# Dependencias
+node_modules
+.next
+out
+dist
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage
+
+# Prisma
+prisma/migrations
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docs
+README.md
+*.md
+
+# Data
+postgres-data

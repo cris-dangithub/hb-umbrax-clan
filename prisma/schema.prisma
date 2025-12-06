@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  habboName     String   // Nombre con capitalización original del usuario
+  habboNameLower String  @unique // Nombre en minúsculas para unicidad
+  password      String
+  ipAddress     String   // IP capturada solo durante el registro
+  rankId        Int      @default(10) // Default: Sombra aprendiz
+  isSovereign   Boolean  @default(false) // Es soberano de su rango
+  avatarUrl     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  rank          Rank     @relation(fields: [rankId], references: [id])
+  news          News[]   @relation("NewsAuthor")
+  promotionRequestsCreated  PromotionRequest[] @relation("RequestCreator")
+  promotionRequestsSubject  PromotionRequest[] @relation("RequestSubject")
+  promotionRequestsReviewed PromotionRequest[] @relation("RequestReviewer")
+  auditLogs     AuditLog[]
+  
+  // Relaciones de Time Tracking
+  timeRequestsCreated  TimeRequest[] @relation("TimeRequestCreator")
+  timeRequestsSubject  TimeRequest[] @relation("TimeRequestSubject")
+  timeRequestsResponder TimeRequest[] @relation("TimeRequestResponder")
+  timeSessionsSubject  TimeSession[] @relation("SessionSubject")
+  timeSegmentsSupervisor TimeSegment[] @relation("SegmentSupervisor")
+
+  @@index([rankId])
+  @@index([habboNameLower])
+  @@index([isSovereign])
+}
+
+model Rank {
+  id              Int      @id @default(autoincrement())
+  name            String
+  order           Int      @unique // 1 = más alto, 10 = más bajo
+  roleDescription String   @db.Text
+  icon            String
+  missionPromotionGoal String? @db.VarChar(10) // Formato: "dd HH:mm" para meta de time de ascenso
+
+  // Relaciones
+  users           User[]
+  promotionRequestsCurrent PromotionRequest[] @relation("CurrentRank")
+  promotionRequestsTarget  PromotionRequest[] @relation("TargetRank")
+}
+
+model News {
+  id        String        @id @default(uuid())
+  title     String
+  content   String        @db.Text
+  category  NewsCategory
+  authorId  String
+  createdAt DateTime      @default(now())
+
+  // Relaciones
+  author    User          @relation("NewsAuthor", fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([category])
+}
+
+enum NewsCategory {
+  EVENTO
+  MILITAR
+  GENERAL
+}
+
+model PromotionRequest {
+  id              String          @id @default(uuid())
+  subjectUserId   String          // Usuario a ascender
+  currentRankId   Int             // Rango actual del súbdito
+  targetRankId    Int             // Rango objetivo
+  requestedById   String          // Soberano que crea la solicitud
+  status          PromotionStatus @default(PENDING)
+  justification   String          @db.Text // Razón del ascenso
+  reviewNotes     String?         @db.Text // Notas de revisión
+  reviewedById    String?         // Quien aprobó/rechazó
+  createdAt       DateTime        @default(now())
+  reviewedAt      DateTime?
+
+  // Relaciones
+  subjectUser     User            @relation("RequestSubject", fields: [subjectUserId], references: [id])
+  currentRank     Rank            @relation("CurrentRank", fields: [currentRankId], references: [id])
+  targetRank      Rank            @relation("TargetRank", fields: [targetRankId], references: [id])
+  requestedBy     User            @relation("RequestCreator", fields: [requestedById], references: [id])
+  reviewedBy      User?           @relation("RequestReviewer", fields: [reviewedById], references: [id])
+
+  @@index([subjectUserId])
+  @@index([requestedById])
+  @@index([reviewedById])
+  @@index([status])
+  @@index([targetRankId])
+  @@index([createdAt])
+}
+
+enum PromotionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String      // Usuario que realizó la acción
+  action      AuditAction // Tipo de acción
+  entityType  String      // Tipo de entidad afectada (User, PromotionRequest, etc.)
+  entityId    String      // ID de la entidad afectada
+  details     String      @db.Text // JSON con detalles de la acción
+  ipAddress   String?     // IP desde donde se realizó la acción
+  createdAt   DateTime    @default(now())
+
+  // Relaciones
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  USER_RANK_CHANGED
+  USER_SOVEREIGN_ASSIGNED
+  USER_SOVEREIGN_REMOVED
+  USER_DELETED
+  PROMOTION_REQUEST_CREATED
+  PROMOTION_REQUEST_APPROVED
+  PROMOTION_REQUEST_REJECTED
+  USER_LOGIN
+  USER_REGISTERED
+  TIME_REQUEST_CREATED
+  TIME_REQUEST_APPROVED
+  TIME_REQUEST_REJECTED
+  TIME_SESSION_CLOSED
+  TIME_SUPERVISOR_TRANSFERRED
+  TIME_REQUEST_EXPIRED
+}
+
+model TimeRequest {
+  id              String            @id @default(uuid())
+  subjectUserId   String            // Súbdito que solicita time
+  createdById     String            // Soberano/Cúpula que crea solicitud
+  status          TimeRequestStatus @default(PENDING)
+  notes           String?           @db.Text // Notas opcionales del solicitante
+  respondedById   String?           // Quien aprobó/rechazó
+  responseNotes   String?           @db.Text // Notas de respuesta
+  createdAt       DateTime          @default(now())
+  respondedAt     DateTime?
+  expiresAt       DateTime          // 5 minutos desde creación
+
+  // Relaciones
+  subjectUser     User              @relation("TimeRequestSubject", fields: [subjectUserId], references: [id])
+  createdBy       User              @relation("TimeRequestCreator", fields: [createdById], references: [id])
+  respondedBy     User?             @relation("TimeRequestResponder", fields: [respondedById], references: [id])
+
+  @@index([subjectUserId])
+  @@index([createdById])
+  @@index([respondedById])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+enum TimeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model TimeSession {
+  id              String            @id @default(uuid())
+  subjectUserId   String            // Súbdito con time activo
+  status          TimeSessionStatus @default(ACTIVE)
+  startedAt       DateTime          @default(now())
+  closedAt        DateTime?
+  totalMinutes    Int?              // Calculado al cerrar
+
+  // Relaciones
+  subjectUser     User              @relation("SessionSubject", fields: [subjectUserId], references: [id])
+  segments        TimeSegment[]
+
+  @@index([subjectUserId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum TimeSessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+model TimeSegment {
+  id                    String       @id @default(uuid())
+  sessionId             String       // Sesión padre
+  currentSupervisorId   String       // Supervisor actual del segmento
+  startedAt             DateTime     @default(now())
+  endedAt               DateTime?
+  minutes               Int?         // Calculado al finalizar segmento
+
+  // Relaciones
+  session               TimeSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  currentSupervisor     User         @relation("SegmentSupervisor", fields: [currentSupervisorId], references: [id])
+
+  @@index([sessionId])
+  @@index([currentSupervisorId])
+  @@index([startedAt])
+}
