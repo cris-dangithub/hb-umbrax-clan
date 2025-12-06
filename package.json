@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "convert-fog": "ffmpeg -i public/video-fog.mov -c:v libvpx-vp9 -b:v 0 -crf 30 -pix_fmt yuva420p public/fog-video.webm && ffmpeg -i public/video-fog.mov -c:v libx264 -crf 23 -preset fast public/fog-video.mp4",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
