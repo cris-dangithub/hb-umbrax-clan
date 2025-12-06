@@ -3,9 +3,10 @@ import type { NextRequest } from 'next/server'
 import { getSession } from './lib/session'
 
 // ============================================
-// Middleware para proteger rutas
+// Proxy para proteger rutas (antes middleware)
+// Migrado de middleware.ts a proxy.ts (Next.js 16)
 // ============================================
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const session = await getSession()
 
   // Si no hay sesión activa, redirigir a home con modal de login
