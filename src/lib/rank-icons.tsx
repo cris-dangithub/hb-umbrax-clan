@@ -2,63 +2,70 @@
  * Sistema de mapeo de iconos de rangos
  * 
  * Este archivo mapea los identificadores de iconos almacenados en la base de datos
- * a iconos visuales que pueden ser texto Unicode o componentes React.
+ * a componentes React de lucide-react para una renderización consistente y escalable.
  * 
  * Uso:
- * - getRankIcon(iconIdentifier): Retorna el icono renderizable (string o ReactNode)
- * - isReactComponent(icon): Verifica si el resultado es un componente React
+ * - RankIcon: Componente para renderizar iconos de rangos
+ * - RANK_ICON_MAP: Mapeo de identificadores a componentes de lucide-react
  */
 
-import { ReactNode } from 'react'
+import { createElement } from 'react';
+import {
+  Crown,
+  Star,
+  Laptop,
+  Zap,
+  Eye,
+  Shield,
+  Scroll,
+  Sword,
+  Sunrise,
+  Book,
+  ShieldCheck,
+  GraduationCap,
+  User,
+  HelpCircle,
+  type LucideIcon
+} from 'lucide-react';
 
 // Tipo para el mapeo de iconos
 export type RankIconMap = {
-  [key: string]: string | ReactNode
-}
+  [key: string]: LucideIcon;
+};
 
 /**
- * Mapeo de identificadores de iconos a representaciones visuales
- * Por defecto usa iconos de texto Unicode
- * En el futuro se puede reemplazar con componentes React importando desde lucide-react
+ * Mapeo de identificadores de iconos a componentes de lucide-react
+ * Todos los iconos utilizan componentes React nativos para mejor rendimiento y escalabilidad
  */
 export const RANK_ICON_MAP: RankIconMap = {
   // Rangos de Cúpula Directiva (1-3)
-  'crown': '👑',        // Corona - Cúpula Directiva
-  'star': '⭐',         // Estrella - Cúpula Estratégica
-  'laptop': '💻',       // Laptop - Cúpula Operativa
+  'crown': Crown,           // Corona - Cúpula Directiva
+  'star': Star,             // Estrella - Cúpula Estratégica
+  'laptop': Laptop,         // Laptop - Cúpula Operativa
   
   // Rangos de Soberanos/Súbditos (4-13)
-  'zap': '⚡',          // Rayo - Estratega Supremo
-  'eye': '👁️',          // Ojo - Vigía Mayor
-  'shield': '🛡️',       // Escudo - Guardián de Sombras
-  'scroll': '📜',       // Pergamino - Escriba Maestro
-  'sword': '⚔️',        // Espadas - Guerrero de Élite
-  'sunrise': '🌅',      // Amanecer - Sombra del Alba
-  'book': '📖',         // Libro - Aprendiz Mayor
-  'shield-check': '✅', // Escudo verificado - Sombra Activa
-  'graduation-cap': '🎓', // Gorra de graduación - Sombra en Formación
-  'user': '👤',         // Usuario - Sombra Aprendiz
+  'zap': Zap,               // Rayo - Estratega Supremo
+  'eye': Eye,               // Ojo - Vigía Mayor
+  'shield': Shield,         // Escudo - Guardián de Sombras
+  'scroll': Scroll,         // Pergamino - Escriba Maestro
+  'sword': Sword,           // Espadas - Guerrero de Élite
+  'sunrise': Sunrise,       // Amanecer - Sombra del Alba
+  'book': Book,             // Libro - Aprendiz Mayor
+  'shield-check': ShieldCheck, // Escudo verificado - Sombra Activa
+  'graduation-cap': GraduationCap, // Gorra de graduación - Sombra en Formación
+  'user': User,             // Usuario - Sombra Aprendiz
   
   // Fallback para iconos no mapeados
-  'default': '❓'
-}
+  'default': HelpCircle
+};
 
 /**
- * Obtiene el icono renderizable para un identificador de rango
+ * Obtiene el componente de icono para un identificador de rango
  * @param iconIdentifier - El identificador del icono desde la base de datos
- * @returns El icono como string (emoji) o ReactNode (componente)
+ * @returns El componente de icono de lucide-react
  */
-export function getRankIcon(iconIdentifier: string): string | ReactNode {
-  return RANK_ICON_MAP[iconIdentifier] || RANK_ICON_MAP['default']
-}
-
-/**
- * Verifica si un icono es un componente React
- * @param icon - El icono a verificar
- * @returns true si es un ReactNode que no es string
- */
-export function isReactComponent(icon: string | ReactNode): icon is ReactNode {
-  return typeof icon !== 'string'
+export function getRankIconComponent(iconIdentifier: string): LucideIcon {
+  return RANK_ICON_MAP[iconIdentifier] || RANK_ICON_MAP['default'];
 }
 
 /**
@@ -66,35 +73,25 @@ export function isReactComponent(icon: string | ReactNode): icon is ReactNode {
  * @param iconIdentifier - El identificador del icono desde la base de datos
  * @param className - Clases CSS opcionales
  * @param style - Estilos inline opcionales
+ * @param size - Tamaño del icono (por defecto: 20)
  * @returns JSX con el icono renderizado
  */
 export function RankIcon({ 
   iconIdentifier, 
   className = '', 
-  style = {} 
+  style = {},
+  size = 20
 }: { 
-  iconIdentifier: string
-  className?: string
-  style?: React.CSSProperties 
+  iconIdentifier: string;
+  className?: string;
+  style?: React.CSSProperties;
+  size?: number;
 }) {
-  const icon = getRankIcon(iconIdentifier)
+  const IconComponent = getRankIconComponent(iconIdentifier);
   
-  // Si es un componente React, lo renderizamos directamente
-  if (isReactComponent(icon)) {
-    return <span className={className} style={style}>{icon}</span>
-  }
-  
-  // Si es un string (emoji), lo renderizamos como texto
-  return (
-    <span 
-      className={className} 
-      style={{ 
-        fontSize: '1.2rem',
-        display: 'inline-block',
-        ...style 
-      }}
-    >
-      {icon}
-    </span>
-  )
+  return createElement(IconComponent, {
+    className,
+    style,
+    size
+  });
 }

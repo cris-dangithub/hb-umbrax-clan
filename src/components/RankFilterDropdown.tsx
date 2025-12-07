@@ -65,7 +65,7 @@ export default function RankFilterDropdown({
         <span className="flex items-center gap-2">
           {selectedRank ? (
             <>
-              <RankIcon iconIdentifier={selectedRank.icon} style={{ fontSize: '1rem' }} />
+              <RankIcon iconIdentifier={selectedRank.icon} size={16} />
               <span>{selectedRank.name}</span>
             </>
           ) : (
@@ -110,7 +110,7 @@ export default function RankFilterDropdown({
                 selectedRankId === rank.id.toString() ? 'bg-[#CC933B]/10' : ''
               }`}
             >
-              <RankIcon iconIdentifier={rank.icon} style={{ fontSize: '1.2rem' }} />
+              <RankIcon iconIdentifier={rank.icon} size={20} />
               <div className="flex-1">
                 <p
                   className="font-['Rajdhani'] font-semibold"
