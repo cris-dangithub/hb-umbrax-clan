@@ -259,7 +259,7 @@ export default function UserTable() {
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto min-h-[20rem]">
+      <div>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#CC933B' }} />
