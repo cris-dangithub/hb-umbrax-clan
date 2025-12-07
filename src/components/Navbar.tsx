@@ -289,7 +289,7 @@ export default function Navbar({ user, onOpenLogin, onOpenRegister }: NavbarProp
                 {/* Panel Admin - Solo para usuarios con permisos */}
                 {hasAdminPermissions(user) && (
                   <Link
-                    href="/admin"
+                    href="/admin/users"
                     className="flex items-center gap-2 px-4 py-2 rounded"
                     style={{
                       fontFamily: 'Rajdhani, sans-serif',
