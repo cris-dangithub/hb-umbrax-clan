@@ -259,7 +259,7 @@ export default function UserTable() {
       </div>
 
       {/* Tabla */}
-      <div>
+      <div className="overflow-x-auto min-h-[20rem]">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#CC933B' }} />
@@ -364,7 +364,9 @@ export default function UserTable() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <RankIcon iconIdentifier={user.rank.icon} />
+                      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                        <RankIcon iconIdentifier={user.rank.icon} size={20} />
+                      </div>
                       <span
                         style={{
                           fontFamily: 'Rajdhani, sans-serif',
