@@ -63,11 +63,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que el solicitante tiene permisos sobre el súbdito
+    // Cúpula: puede enviar time a cualquier usuario de rangos 4-13
+    // Soberanos: pueden enviar time a cualquier usuario de rangos 4-13 (Súbditos y otros Soberanos)
     const role = getUserRole(currentUser);
     const isCupula = role === UserRole.CUPULA;
-    const isSovereignOfRank = role === UserRole.SOBERANO && currentUser.rank.order === subjectUser.rank.order;
+    const isSoberano = role === UserRole.SOBERANO;
 
-    if (!isCupula && !isSovereignOfRank) {
+    if (!isCupula && !isSoberano) {
       return NextResponse.json(
         { error: 'No tienes permisos para solicitar time a este usuario' },
         { status: 403 }

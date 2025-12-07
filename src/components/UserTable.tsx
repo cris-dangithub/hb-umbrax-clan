@@ -58,6 +58,9 @@ export default function UserTable() {
   const [rankFilter, setRankFilter] = useState<string>('')
   const [bossFilter, setBossFilter] = useState<string>('')
   const [page, setPage] = useState(1)
+  
+  // Lista de rangos disponibles
+  const [availableRanks, setAvailableRanks] = useState<Rank[]>([])
 
   // Current user info (for permissions)
   const [currentUserRankOrder, setCurrentUserRankOrder] = useState(10)
@@ -83,6 +86,11 @@ export default function UserTable() {
   useEffect(() => {
     fetchCurrentUser()
   }, [])
+  
+  // Fetch available ranks
+  useEffect(() => {
+    fetchRanks()
+  }, [])
 
   const fetchCurrentUser = async () => {
     try {
@@ -96,6 +104,18 @@ export default function UserTable() {
       }
     } catch (err) {
       console.error('Error fetching current user:', err)
+    }
+  }
+  
+  const fetchRanks = async () => {
+    try {
+      const response = await fetch('/api/ranks')
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableRanks(data.ranks || [])
+      }
+    } catch (err) {
+      console.error('Error fetching ranks:', err)
     }
   }
 
@@ -222,16 +242,11 @@ export default function UserTable() {
           }}
         >
           <option value="">Todos los rangos</option>
-          <option value="1">🌑 Gran Señor de las Sombras</option>
-          <option value="2">🌓 Maestro de las Tinieblas</option>
-          <option value="3">🌔 Embajador Omega</option>
-          <option value="4">🌕 Guardián de los Secretos</option>
-          <option value="5">⚔️ Estratega Oscuro</option>
-          <option value="6">🗡️ Protector de la Noche</option>
-          <option value="7">🔥 Cazador Silencioso</option>
-          <option value="8">⚡ Explorador Sombrío</option>
-          <option value="9">🌌 Maestro de Cuchillas</option>
-          <option value="10">👤 Sombra Aprendiz</option>
+          {availableRanks.map((rank) => (
+            <option key={rank.id} value={rank.id}>
+              {rank.icon} {rank.name}
+            </option>
+          ))}
         </select>
 
         {/* Filtro de Soberanos */}
