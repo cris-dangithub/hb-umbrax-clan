@@ -35,7 +35,7 @@ export default async function RolesPage() {
               color: '#ededed',
             }}
           >
-            Sistema de 10 rangos de UMBRAX CLAN, desde Sombra Aprendiz hasta Gran Señor de las Sombras.
+            Sistema de 13 rangos de UMBRAX CLAN, desde Sombra Aprendiz hasta Cúpula Directiva.
             Cada rango otorga diferentes responsabilidades y permisos dentro de la organización.
           </p>
         </div>

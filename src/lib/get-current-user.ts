@@ -50,7 +50,7 @@ export async function getCurrentUser(): Promise<UserWithRank | null> {
 // ============================================
 /**
  * Verifica si el usuario actual tiene un rango igual o superior al especificado
- * @param requiredOrder - Orden del rango requerido (1 = más alto, 10 = más bajo)
+ * @param requiredOrder - Orden del rango requerido (1 = más alto, 13 = más bajo)
  * @returns true si tiene permisos, false si no
  */
 export async function hasRankPermission(requiredOrder: number): Promise<boolean> {

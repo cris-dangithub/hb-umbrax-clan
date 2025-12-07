@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         ipAddress,
         avatarUrl: habboValidation.avatarUrl!,
-        rankId: 10, // Sombra aprendiz por defecto
+        rankId: 13, // Sombra Aprendiz por defecto (rango más bajo)
       },
       include: {
         rank: true,

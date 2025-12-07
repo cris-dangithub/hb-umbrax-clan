@@ -5,7 +5,7 @@ import { z } from 'zod'
 // ============================================
 
 export const updateUserRankSchema = z.object({
-  rankId: z.number().int().min(1).max(10),
+  rankId: z.number().int().min(1).max(13),
   reason: z.string().min(10, 'La razón debe tener al menos 10 caracteres'),
 })
 
@@ -24,7 +24,7 @@ export const deleteUserSchema = z.object({
 
 export const createPromotionRequestSchema = z.object({
   subjectUserId: z.string().uuid('ID de usuario inválido'),
-  targetRankId: z.number().int().min(1).max(10),
+  targetRankId: z.number().int().min(1).max(13),
   justification: z.string().min(20, 'La justificación debe tener al menos 20 caracteres'),
 })
 
