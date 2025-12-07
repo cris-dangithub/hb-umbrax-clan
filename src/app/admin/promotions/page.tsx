@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser, hasAdminAccess } from '@/lib/get-current-user'
+import { isCupula } from '@/lib/roles'
 
 export default async function AdminPromotionsPage() {
   const user = await getCurrentUser()
@@ -13,7 +14,8 @@ export default async function AdminPromotionsPage() {
     redirect('/dashboard')
   }
 
-  const hasFullAccess = user.rank.order <= 3
+  // Solo la Cúpula Directiva tiene acceso completo
+  const hasFullAccess = isCupula(user)
 
   return (
     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8 pb-12">

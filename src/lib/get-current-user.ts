@@ -1,6 +1,7 @@
 import { prisma } from './prisma'
 import { getSession } from './session'
 import type { User, Rank } from '@prisma/client'
+import { hasAdminPermissions, isCupula, getUserRole, UserRole } from './roles'
 
 // ============================================
 // Tipo de Usuario con Rango incluido
@@ -66,22 +67,25 @@ export async function hasRankPermission(requiredOrder: number): Promise<boolean>
 
 // ============================================
 // Helpers para Panel Administrativo
+// (Actualizados para usar sistema de roles centralizado)
 // ============================================
 
 /**
- * Verifica si el usuario tiene acceso total (Cúpula Directiva - rangos 1, 2, 3)
+ * Verifica si el usuario tiene acceso total (Cúpula Directiva)
+ * @deprecated Use isCupula from roles.ts instead
  */
 export async function hasFullAccess(): Promise<boolean> {
   const user = await getCurrentUser()
-  return user ? user.rank.order <= 3 : false
+  return isCupula(user)
 }
 
 /**
  * Verifica si el usuario es Soberano
+ * @deprecated Check getUserRole(user) === UserRole.SOBERANO instead
  */
 export async function isSovereign(): Promise<boolean> {
   const user = await getCurrentUser()
-  return user ? user.isSovereign : false
+  return getUserRole(user) === UserRole.SOBERANO
 }
 
 /**
@@ -90,8 +94,7 @@ export async function isSovereign(): Promise<boolean> {
  */
 export async function hasAdminAccess(): Promise<boolean> {
   const user = await getCurrentUser()
-  if (!user) return false
-  return user.rank.order <= 3 || user.isSovereign
+  return hasAdminPermissions(user)
 }
 
 /**
@@ -102,11 +105,13 @@ export async function canApprovePromotionToRank(targetRankOrder: number): Promis
   const user = await getCurrentUser()
   if (!user) return false
 
+  const role = getUserRole(user)
+  
   // Cúpula directiva puede aprobar todo
-  if (user.rank.order <= 3) return true
+  if (role === UserRole.CUPULA) return true
 
   // Soberano solo puede aprobar su propio rango
-  if (user.isSovereign && user.rank.order === targetRankOrder) return true
+  if (role === UserRole.SOBERANO && user.rank.order === targetRankOrder) return true
 
   return false
 }
@@ -120,11 +125,13 @@ export async function canCreatePromotionRequest(): Promise<boolean> {
 }
 
 /**
- * Verifica si un usuario es súbdito (rangos 5-10)
+ * Verifica si un usuario es súbdito (rangos 4-13 sin privilegios de soberano)
  * @param rankOrder - Orden del rango a verificar
+ * @deprecated This should be checked via getUserRole instead
  */
 export function isSubordinate(rankOrder: number): boolean {
-  return rankOrder >= 5 && rankOrder <= 10
+  // Rangos 4-13 son potencialmente súbditos (si no son soberanos)
+  return rankOrder >= 4 && rankOrder <= 13
 }
 
 /**
@@ -139,17 +146,19 @@ export async function getCurrentUserPermissions() {
       hasAdminAccess: false,
       canCreatePromotions: false,
       approvableRanks: [] as number[],
+      role: UserRole.GUEST,
     }
   }
 
-  const fullAccess = user.rank.order <= 3
-  const sovereign = user.isSovereign
-  const adminAccess = fullAccess || sovereign
+  const role = getUserRole(user)
+  const fullAccess = role === UserRole.CUPULA
+  const sovereign = role === UserRole.SOBERANO
+  const adminAccess = hasAdminPermissions(user)
 
   // Si tiene acceso total, puede aprobar todos los rangos
   // Si es soberano, solo puede aprobar su rango
   const approvableRanks = fullAccess
-    ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     : sovereign
       ? [user.rank.order]
       : []
@@ -161,5 +170,6 @@ export async function getCurrentUserPermissions() {
     canCreatePromotions: adminAccess,
     approvableRanks,
     userRankOrder: user.rank.order,
+    role,
   }
 }

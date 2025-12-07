@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hasAdminAccess } from '@/lib/get-current-user';
+import { getUserRole, UserRole } from '@/lib/roles';
 import { createAuditLog } from '@/lib/audit';
 import { hasPendingRequest, hasActiveSession } from '@/lib/time-tracking';
 
@@ -52,21 +53,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que es súbdito (rangos 5-10)
-    if (subjectUser.rank.order < 5 || subjectUser.rank.order > 10) {
+    // Verificar que es súbdito (rangos 4-13, pero típicamente se controla tiempo en rangos medios/bajos)
+    // Ajustar según las necesidades del clan
+    if (subjectUser.rank.order < 4 || subjectUser.rank.order > 13) {
       return NextResponse.json(
-        { error: 'Solo se puede solicitar time para súbditos (rangos 5-10)' },
+        { error: 'Solo se puede solicitar time para rangos 4-13' },
         { status: 400 }
       );
     }
 
     // Verificar que el solicitante tiene permisos sobre el súbdito
-    const isCupula = currentUser.rank.order <= 3;
-    const isSovereignOfRank = currentUser.isSovereign && currentUser.rank.order === subjectUser.rank.order;
+    const role = getUserRole(currentUser);
+    const isCupula = role === UserRole.CUPULA;
+    const isSovereignOfRank = role === UserRole.SOBERANO && currentUser.rank.order === subjectUser.rank.order;
 
     if (!isCupula && !isSovereignOfRank) {
       return NextResponse.json(
-        { error: 'No tienes permisos para solicitar time a este súbdito' },
+        { error: 'No tienes permisos para solicitar time a este usuario' },
         { status: 403 }
       );
     }

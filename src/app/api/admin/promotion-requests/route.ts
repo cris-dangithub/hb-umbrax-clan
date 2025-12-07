@@ -5,6 +5,7 @@ import {
   hasAdminAccess,
   isSubordinate,
 } from '@/lib/get-current-user'
+import { getUserRole, UserRole } from '@/lib/roles'
 import { createAuditLog } from '@/lib/audit'
 import {
   parsePaginationParams,
@@ -66,8 +67,9 @@ export async function GET(request: NextRequest) {
       where.status = statusParam as PromotionStatus
     }
 
-    // Si es soberano (no cúpula), solo ver solicitudes relevantes
-    if (currentUser.rank.order > 3 && currentUser.isSovereign) {
+    // Si es soberano (no cúpula), solo ver solicitudes relevantes a su rango
+    const role = getUserRole(currentUser)
+    if (role === UserRole.SOBERANO) {
       // Ver solicitudes a su rango que estén pendientes, o las que creó
       where.targetRank = { order: currentUser.rank.order }
     }

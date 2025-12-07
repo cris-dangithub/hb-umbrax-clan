@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, X, Radio, Calendar, Info, User, LogOut, Loader2, Check } from 'lucide-react'
 import AdminDropdownMenu from './AdminDropdownMenu'
 import type { UserWithRank } from '@/lib/get-current-user'
+import { hasAdminPermissions } from '@/lib/roles'
 
 interface NavbarProps {
   user?: UserWithRank | null
@@ -164,18 +165,9 @@ export default function Navbar({ user, onOpenLogin, onOpenRegister }: NavbarProp
             {user ? (
               <div className="flex items-center gap-3">
                 {/* Admin Panel Dropdown - Solo para usuarios con permisos */}
-                {(() => {
-                  // Debug logging
-                  console.log('Navbar user data:', {
-                    habboName: user.habboName,
-                    rankOrder: user.rank?.order,
-                    isSovereign: user.isSovereign,
-                    shouldShowAdmin: (user.rank?.order <= 3 || user.isSovereign)
-                  })
-                  return (user.rank?.order <= 3 || user.isSovereign) && (
-                    <AdminDropdownMenu user={user} />
-                  )
-                })()}
+                {hasAdminPermissions(user) && (
+                  <AdminDropdownMenu user={user} />
+                )}
                 
                 <Link
                   href="/dashboard"
@@ -295,7 +287,7 @@ export default function Navbar({ user, onOpenLogin, onOpenRegister }: NavbarProp
             {user ? (
               <>
                 {/* Panel Admin - Solo para usuarios con permisos */}
-                {(user.rank?.order <= 3 || user.isSovereign) && (
+                {hasAdminPermissions(user) && (
                   <Link
                     href="/admin"
                     className="flex items-center gap-2 px-4 py-2 rounded"

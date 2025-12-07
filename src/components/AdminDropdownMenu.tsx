@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import NavDropdownItem from './NavDropdownItem'
 import type { UserWithRank } from '@/lib/get-current-user'
+import { getUserRole, UserRole } from '@/lib/roles'
 
 interface AdminDropdownMenuProps {
   user: UserWithRank
@@ -25,8 +26,9 @@ export default function AdminDropdownMenu({ user }: AdminDropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const hasFullAccess = user.rank.order <= 3
-  const isSovereign = user.isSovereign
+  const role = getUserRole(user)
+  const hasFullAccess = role === UserRole.CUPULA
+  const isSovereign = role === UserRole.SOBERANO
 
   // Close dropdown when clicking outside
   useEffect(() => {
