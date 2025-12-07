@@ -187,10 +187,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que es un súbdito
+    // Verificar que es un súbdito o soberano (rangos 4-13, excluyendo Cúpula Directiva)
     if (!isSubordinate(subjectUser.rank.order)) {
       return NextResponse.json(
-        { error: 'Solo se pueden crear solicitudes para súbditos (rangos 5-10)' },
+        { error: 'Solo se pueden crear solicitudes para usuarios de rangos 4-13 (Súbditos y Soberanos)' },
         { status: 400 }
       )
     }

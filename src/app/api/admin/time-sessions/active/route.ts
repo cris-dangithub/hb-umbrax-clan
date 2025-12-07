@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user';
+import { getUserRole, UserRole } from '@/lib/roles';
 import { getActiveTimeSessions } from '@/lib/time-tracking';
 
 type ActiveTimeSession = Awaited<ReturnType<typeof getActiveTimeSessions>>[number];
@@ -21,9 +22,10 @@ export async function GET() {
     }
 
     // Verificar que tiene permisos (Cúpula, Soberano, o Súbdito con sesión activa)
-    const isCupula = await hasFullAccess();
-    const isSovereign = currentUser.isSovereign;
-    const isSubdito = currentUser.rank.order >= 5 && currentUser.rank.order <= 10;
+    const role = getUserRole(currentUser);
+    const isCupula = role === UserRole.CUPULA;
+    const isSovereign = role === UserRole.SOBERANO;
+    const isSubdito = role === UserRole.SUBDITO;
 
     // Obtener sesiones activas según rol
     let sessions;

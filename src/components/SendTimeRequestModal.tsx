@@ -50,7 +50,8 @@ export default function SendTimeRequestModal({
 
   if (!isOpen || !user) return null;
 
-  const isFormValid = user.rank.order >= 5 && user.rank.order <= 10;
+  // Valid for ranks 4-13 (all Súbditos and Soberanos, excluding Cúpula Directiva)
+  const isFormValid = user.rank.order >= 4 && user.rank.order <= 13;
 
   const handlePreview = () => {
     if (!isFormValid) return;
@@ -127,7 +128,7 @@ export default function SendTimeRequestModal({
           {!isFormValid && (
             <div className="p-3 bg-yellow-500/10 border border-yellow-500 rounded">
               <p className="text-yellow-500 font-['Rajdhani'] text-sm">
-                <strong>Advertencia:</strong> Solo se pueden enviar solicitudes de time a usuarios con rango Súbdito (rangos 5-10).
+                <strong>Advertencia:</strong> Solo se pueden enviar solicitudes de time a usuarios de rangos 4-13 (Súbditos y Soberanos).
               </p>
             </div>
           )}

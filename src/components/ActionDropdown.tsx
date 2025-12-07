@@ -72,9 +72,10 @@ export default function ActionDropdown({
   // Only Cúpula can manage rank bosses, but NOT on Cúpula users (ranks 1-3)
   const canManageSovereign = isCupula && !targetIsCupula;
   
-  // Time request: Cúpula or Soberanos can send requests to súbditos (ranks 5-10)
-  const isTargetSubdito = user.rank.order >= 5 && user.rank.order <= 10;
-  const canSendTimeRequest = (isCupula || isSovereign) && isTargetSubdito;
+  // Time request: Cúpula or Soberanos can send requests to users in ranks 4-13
+  // (All Súbditos and Soberanos, excluding Cúpula Directiva)
+  const isTargetEligibleForTime = user.rank.order >= 4 && user.rank.order <= 13;
+  const canSendTimeRequest = (isCupula || isSovereign) && isTargetEligibleForTime;
 
   const handleAction = (action: () => void) => {
     setIsOpen(false);

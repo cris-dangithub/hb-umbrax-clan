@@ -53,11 +53,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que es súbdito (rangos 4-13, pero típicamente se controla tiempo en rangos medios/bajos)
-    // Ajustar según las necesidades del clan
+    // Verificar que el usuario objetivo está en rangos elegibles para time tracking (4-13)
+    // Excluye Cúpula Directiva (rangos 1-3)
     if (subjectUser.rank.order < 4 || subjectUser.rank.order > 13) {
       return NextResponse.json(
-        { error: 'Solo se puede solicitar time para rangos 4-13' },
+        { error: 'Solo se puede solicitar time para usuarios de rangos 4-13 (Súbditos y Soberanos)' },
         { status: 400 }
       );
     }
@@ -175,9 +175,10 @@ export async function GET(request: NextRequest) {
     const onlyPending = searchParams.get('onlyPending') === 'true';
 
     // Determinar filtros según permisos
-    const isCupula = currentUser.rank.order <= 3;
-    const isSovereignUser = currentUser.isSovereign;
-    const isSubordinate = currentUser.rank.order >= 5;
+    const role = getUserRole(currentUser);
+    const isCupula = role === UserRole.CUPULA;
+    const isSovereignUser = role === UserRole.SOBERANO;
+    const isSubordinate = role === UserRole.SUBDITO;
 
     const whereClause: Record<string, unknown> = {};
 
@@ -189,11 +190,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtrar según permisos
-    if (isSubordinate && !isSovereignUser) {
-      // Súbdito normal: solo sus propias solicitudes
+    if (isSubordinate) {
+      // Súbdito: solo sus propias solicitudes
       whereClause.subjectUserId = currentUser.id;
-    } else if (isSovereignUser && !isCupula) {
-      // Soberano no Cúpula: solicitudes de súbditos de su rango
+    } else if (isSovereignUser) {
+      // Soberano: solicitudes de usuarios de su rango
       whereClause.subjectUser = {
         rankId: currentUser.rankId,
       };
