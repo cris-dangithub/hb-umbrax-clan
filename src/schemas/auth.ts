@@ -10,8 +10,8 @@ export const registerSchema = z
       .min(3, 'El nombre debe tener mínimo 3 caracteres')
       .max(25, 'El nombre debe tener máximo 25 caracteres')
       .regex(
-        /^[a-zA-Z0-9._-]+$/,
-        'Solo se permiten letras, números, puntos, guiones y guiones bajos'
+        /^[a-zA-Z0-9._:-]+$/,
+        'Solo se permiten letras, números, puntos, guiones, guiones bajos y dos puntos'
       ),
     password: z
       .string()
