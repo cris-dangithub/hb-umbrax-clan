@@ -9,7 +9,8 @@ import DeleteUserModal from './DeleteUserModal'
 import ChangePasswordModal from './ChangePasswordModal'
 import SovereignModal from './SovereignModal'
 import SendTimeRequestModal from './SendTimeRequestModal'
-import { RankIcon } from '@/lib/rank-icons'
+import { RankIcon } from '@/lib/rank-icons';
+import RankFilterDropdown from './RankFilterDropdown';
 
 interface Rank {
   id: number
@@ -230,24 +231,14 @@ export default function UserTable() {
         </div>
 
         {/* Filtro de Rango */}
-        <select
-          value={rankFilter}
-          onChange={(e) => {
-            setRankFilter(e.target.value)
-            setPage(1)
+        <RankFilterDropdown
+          ranks={availableRanks}
+          selectedRankId={rankFilter}
+          onSelectRank={(rankId) => {
+            setRankFilter(rankId);
+            setPage(1);
           }}
-          className="px-4 py-2 rounded bg-black/50 text-white border border-[#CC933B]/50 focus:border-[#CC933B] focus:outline-none"
-          style={{
-            fontFamily: 'Rajdhani, sans-serif',
-          }}
-        >
-          <option value="">Todos los rangos</option>
-          {availableRanks.map((rank) => (
-            <option key={rank.id} value={rank.id}>
-              {rank.icon} {rank.name}
-            </option>
-          ))}
-        </select>
+        />
 
         {/* Filtro de Soberanos */}
         <select
@@ -268,7 +259,7 @@ export default function UserTable() {
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto min-h-[20rem]">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#CC933B' }} />
