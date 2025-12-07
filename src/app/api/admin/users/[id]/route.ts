@@ -243,10 +243,11 @@ export async function PATCH(
         return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
       }
 
-      // Verificar que el rango es elegible para ser soberano (4-9)
-      if (isSovereign && (targetUser.rank.order < 4 || targetUser.rank.order > 9)) {
+      // Verificar que el rango es elegible para ser soberano (4-12)
+      // El rango 13 (Sombra Aprendiz) no puede ser soberano
+      if (isSovereign && (targetUser.rank.order < 4 || targetUser.rank.order > 12)) {
         return NextResponse.json(
-          { error: 'Solo los rangos 4-9 pueden ser asignados como soberanos' },
+          { error: 'Solo los rangos 4-12 pueden ser asignados como soberanos' },
           { status: 400 }
         )
       }

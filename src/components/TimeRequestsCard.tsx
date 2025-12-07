@@ -42,8 +42,9 @@ export default function TimeRequestsCard({
   const [loading, setLoading] = useState(true)
   const [responding, setResponding] = useState<string | null>(null)
 
-  // Solo mostrar para Cúpula (ranks 1-3) y Soberanos
-  const canSendTimeRequests = isCupula || isSovereign;
+  // Súbditos (rangos 4-13 sin isSovereign) pueden ver sus propias solicitudes
+  // Soberanos y Cúpula pueden ver solicitudes según su alcance
+  const canViewTimeRequests = rankOrder >= 4; // Todos los rangos 4-13 + Cúpula (1-3)
 
   // Fetch solicitudes pendientes cada 5 segundos
   useEffect(() => {
@@ -93,20 +94,22 @@ export default function TimeRequestsCard({
 
   // Filtrar solicitudes según permisos
   const myRequests = requests.filter(req => {
-    // Súbdito: solo sus propias solicitudes
-    if (!isSovereign && !isCupula && rankOrder >= 5) {
-      return req.subjectUser.id === currentUserId
+    // Cúpula: puede ver todas las solicitudes
+    if (isCupula) {
+      return true;
     }
-    // Soberano: solicitudes de súbditos de su rango
-    if (isSovereign && !isCupula) {
-      return req.subjectUser.rank.order === rankOrder
+    
+    // Soberano: puede ver solicitudes de su rango
+    if (isSovereign) {
+      return req.subjectUser.rank.order === rankOrder;
     }
-    // Cúpula: todas
-    return true
+    
+    // Súbdito: solo puede ver sus propias solicitudes
+    return req.subjectUser.id === currentUserId;
   })
 
-  // No renderizar para súbditos
-  if (!canSendTimeRequests) {
+  // No renderizar si el usuario no está en rangos 4-13
+  if (!canViewTimeRequests) {
     return null;
   }
 
