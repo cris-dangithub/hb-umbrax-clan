@@ -294,6 +294,22 @@ export default function Navbar({ user, onOpenLogin, onOpenRegister }: NavbarProp
 
             {user ? (
               <>
+                {/* Panel Admin - Solo para usuarios con permisos */}
+                {(user.rank?.order <= 3 || user.isSovereign) && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 px-4 py-2 rounded"
+                    style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      color: '#0f0f0f',
+                      backgroundColor: '#CC933B',
+                      border: '2px solid #CC933B',
+                    }}
+                  >
+                    ⚡ Panel Admin
+                  </Link>
+                )}
+                
                 <Link
                   href="/dashboard"
                   className="flex items-center gap-2 px-4 py-2 rounded"
