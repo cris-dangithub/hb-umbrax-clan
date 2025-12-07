@@ -5,6 +5,7 @@ import HabboAvatar from './HabboAvatar';
 import AdminModal from './AdminModal';
 import ConfirmationModal from './ConfirmationModal';
 import { generateConfirmationCode } from '@/lib/confirmation';
+import { RankIcon } from '@/lib/rank-icons';
 
 interface Rank {
   id: number;
@@ -178,7 +179,7 @@ export default function ChangeRankModal({
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{rank.icon}</span>
+                    <RankIcon iconIdentifier={rank.icon} style={{ fontSize: '1.5rem' }} />
                     <div>
                       <p className="font-['Rajdhani'] text-white font-semibold">
                         {rank.name}

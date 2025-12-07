@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Shield } from 'lucide-react'
+import { RankIcon } from '@/lib/rank-icons'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,7 +88,7 @@ export default async function RolesPage() {
                       </span>
                     </div>
 
-                    <span className="text-3xl">{rank.icon}</span>
+                    <RankIcon iconIdentifier={rank.icon} style={{ fontSize: '2rem' }} />
                   </div>
 
                   {/* Rank Info */}

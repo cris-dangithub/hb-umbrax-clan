@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hasFullAccess } from '@/lib/get-current-user'
+import { hasAdminAccess } from '@/lib/get-current-user'
 import {
   parsePaginationParams,
   parseSearchParam,
@@ -13,13 +13,13 @@ import {
 /**
  * GET /api/admin/users
  * Lista todos los usuarios con filtros y paginación
- * Solo accesible por Cúpula Directiva (rangos 1-3)
+ * Accesible por Cúpula Directiva (rangos 1-3) y Soberanos
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verificar permisos
-    const fullAccess = await hasFullAccess()
-    if (!fullAccess) {
+    // Verificar permisos administrativos (Cúpula o Soberano)
+    const adminAccess = await hasAdminAccess()
+    if (!adminAccess) {
       return NextResponse.json(
         { error: 'No tienes permisos para acceder a esta funcionalidad' },
         { status: 403 }

@@ -9,6 +9,7 @@ import DeleteUserModal from './DeleteUserModal'
 import ChangePasswordModal from './ChangePasswordModal'
 import SovereignModal from './SovereignModal'
 import SendTimeRequestModal from './SendTimeRequestModal'
+import { RankIcon } from '@/lib/rank-icons'
 
 interface Rank {
   id: number
@@ -357,7 +358,7 @@ export default function UserTable() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span style={{ fontSize: '1.2rem' }}>{user.rank.icon}</span>
+                      <RankIcon iconIdentifier={user.rank.icon} />
                       <span
                         style={{
                           fontFamily: 'Rajdhani, sans-serif',

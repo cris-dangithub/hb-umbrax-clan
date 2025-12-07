@@ -62,18 +62,19 @@ export default function ActionDropdown({
 
   // Determine permissions
   const isCupula = currentUserRankOrder <= 3;
-  const canChangeRank = isCupula || (isSovereign && currentUserRankId !== undefined);
+  const targetIsCupula = user.rank.order <= 3;
+  
+  // Soberanos can change ranks (but only to their own rank - enforced in modal and backend)
+  const canChangeRank = isCupula || (isSovereign && currentUserRankId !== undefined && !targetIsCupula);
+  
   const canChangePassword = isCupula;
   const canDeleteUser = isCupula;
-  
-  // Check if target user is Cúpula (can't delete or change password of Cúpula)
-  const targetIsCupula = user.rank.order <= 3;
   
   // Only Cúpula can manage rank bosses, but NOT on Cúpula users (ranks 1-3)
   const canManageSovereign = isCupula && !targetIsCupula;
   
-  // Time request: Cúpula or Soberanos can send requests to users in ranks 4-13
-  // (All Súbditos and Soberanos, excluding Cúpula Directiva)
+  // Time request: Cúpula or Soberanos can send requests to Súbditos and other Soberanos
+  // (All users in ranks 4-13, excluding Cúpula Directiva)
   const isTargetEligibleForTime = user.rank.order >= 4 && user.rank.order <= 13;
   const canSendTimeRequest = (isCupula || isSovereign) && isTargetEligibleForTime;
 

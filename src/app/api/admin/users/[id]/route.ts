@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user'
+import { getCurrentUser, hasFullAccess, hasAdminAccess } from '@/lib/get-current-user'
 import { createAuditLog } from '@/lib/audit'
 import {
   updateUserRankSchema,
@@ -11,18 +11,21 @@ import {
   buildRankChangeDetails, 
   buildUserDeleteDetails 
 } from '@/lib/audit-details'
+import { getUserRole, UserRole } from '@/lib/roles'
 
 /**
  * GET /api/admin/users/[id]
  * Obtiene información detallada de un usuario específico
+ * Accesible por Cúpula Directiva (rangos 1-3) y Soberanos
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const fullAccess = await hasFullAccess()
-    if (!fullAccess) {
+    // Verificar permisos administrativos (Cúpula o Soberano)
+    const adminAccess = await hasAdminAccess()
+    if (!adminAccess) {
       return NextResponse.json(
         { error: 'No tienes permisos para acceder a esta funcionalidad' },
         { status: 403 }
@@ -88,15 +91,17 @@ export async function GET(
 /**
  * PATCH /api/admin/users/[id]
  * Actualiza rango o rol de soberano de un usuario
- * Solo accesible por Cúpula Directiva (rangos 1-3)
+ * Cúpula: Puede cambiar cualquier rango
+ * Soberanos: Solo pueden cambiar al rango que ellos mismos tienen
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const fullAccess = await hasFullAccess()
-    if (!fullAccess) {
+    // Verificar permisos administrativos (Cúpula o Soberano)
+    const adminAccess = await hasAdminAccess()
+    if (!adminAccess) {
       return NextResponse.json(
         { error: 'No tienes permisos para acceder a esta funcionalidad' },
         { status: 403 }
@@ -107,6 +112,10 @@ export async function PATCH(
     if (!currentUser) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
+
+    const currentUserRole = getUserRole(currentUser)
+    const isCupula = currentUserRole === UserRole.CUPULA
+    const isSoberano = currentUserRole === UserRole.SOBERANO
 
     const { id } = await params
     const body = await request.json()
@@ -134,10 +143,26 @@ export async function PATCH(
         return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
       }
 
+      // Verificar que no se intenta cambiar el rango de un miembro de la Cúpula
+      if (targetUser.rank.order <= 3 && !isCupula) {
+        return NextResponse.json(
+          { error: 'No puedes cambiar el rango de miembros de la Cúpula Directiva' },
+          { status: 403 }
+        )
+      }
+
       // Verificar que el rango existe
       const newRank = await prisma.rank.findUnique({ where: { id: rankId } })
       if (!newRank) {
         return NextResponse.json({ error: 'Rango no encontrado' }, { status: 404 })
+      }
+
+      // Soberanos solo pueden cambiar al rango que ellos mismos tienen
+      if (isSoberano && rankId !== currentUser.rankId) {
+        return NextResponse.json(
+          { error: `Solo puedes asignar usuarios al rango ${currentUser.rank.name} (tu rango actual)` },
+          { status: 403 }
+        )
       }
 
       const oldRankId = targetUser.rankId
@@ -190,7 +215,14 @@ export async function PATCH(
         message: 'Rango actualizado correctamente',
       })
     } else if ('isSovereign' in body) {
-      // Actualizar rol de soberano
+      // Actualizar rol de soberano - Solo Cúpula puede hacerlo
+      if (!isCupula) {
+        return NextResponse.json(
+          { error: 'Solo la Cúpula Directiva puede gestionar Soberanos' },
+          { status: 403 }
+        )
+      }
+
       const validation = updateSovereignSchema.safeParse(body)
       if (!validation.success) {
         return NextResponse.json(

@@ -4,6 +4,7 @@ import { Calendar, Users, Newspaper, ExternalLink, MessageCircle, Twitter, Music
 import Link from 'next/link'
 import Image from 'next/image'
 import HabboAvatar from '@/components/HabboAvatar'
+import { RankIcon } from '@/lib/rank-icons'
 
 export const dynamic = 'force-dynamic'
 
@@ -261,7 +262,10 @@ export default async function Home() {
                           color: '#ededed',
                         }}
                       >
-                        {member.rank.icon} {member.rank.name}
+                        <span className="inline-flex items-center gap-1">
+                          <RankIcon iconIdentifier={member.rank.icon} style={{ fontSize: '0.9rem' }} />
+                          {member.rank.name}
+                        </span>
                       </p>
                     </div>
                   </div>

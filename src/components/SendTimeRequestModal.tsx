@@ -6,6 +6,7 @@ import HabboAvatar from './HabboAvatar';
 import AdminModal from './AdminModal';
 import ConfirmationModal from './ConfirmationModal';
 import { generateConfirmationCode } from '@/lib/confirmation';
+import { RankIcon } from '@/lib/rank-icons';
 
 interface Rank {
   id: number;
@@ -117,8 +118,9 @@ export default function SendTimeRequestModal({
                 <p className="font-bold text-[#3b82f6] font-['Rajdhani'] text-lg">
                   {user.habboName}
                 </p>
-                <p className="text-white/70 font-['Rajdhani'] text-sm">
-                  {user.rank.icon} {user.rank.name}
+                <p className="text-white/70 font-['Rajdhani'] text-sm flex items-center gap-1">
+                  <RankIcon iconIdentifier={user.rank.icon} style={{ fontSize: '1rem' }} />
+                  {user.rank.name}
                 </p>
               </div>
             </div>

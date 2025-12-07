@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hasFullAccess } from '@/lib/get-current-user';
+import { hasAdminAccess } from '@/lib/get-current-user';
 
 /**
  * GET /api/ranks
  * Obtiene la lista de rangos disponibles
+ * Accesible por Cúpula Directiva (rangos 1-3) y Soberanos
  */
 export async function GET() {
   try {
-    const fullAccess = await hasFullAccess();
-    if (!fullAccess) {
+    // Verificar permisos administrativos (Cúpula o Soberano)
+    const adminAccess = await hasAdminAccess();
+    if (!adminAccess) {
       return NextResponse.json(
         { error: 'No tienes permisos para acceder a esta funcionalidad' },
         { status: 403 }
