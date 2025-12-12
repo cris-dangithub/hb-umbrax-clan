@@ -31,14 +31,19 @@ export async function GET() {
     let sessions;
     if (isCupula) {
       // Cúpula ve todas las sesiones
+      console.log('[ActiveSessions] Obteniendo todas las sesiones (Cúpula)');
       sessions = await getActiveTimeSessions();
     } else if (isSovereign) {
       // Soberano solo ve sus sesiones supervisadas
+      console.log(`[ActiveSessions] Obteniendo sesiones supervisadas por ${currentUser.habboName} (${currentUser.id})`);
       sessions = await getActiveTimeSessions(currentUser.id);
+      console.log(`[ActiveSessions] Sesiones encontradas: ${sessions.length}`);
     } else if (isSubdito) {
       // Súbdito solo ve su propia sesión activa (como sujeto)
+      console.log(`[ActiveSessions] Obteniendo sesión de ${currentUser.habboName} (${currentUser.id})`);
       const allSessions = await getActiveTimeSessions();
       sessions = allSessions.filter((s: ActiveTimeSession) => s.subjectUser.id === currentUser.id);
+      console.log(`[ActiveSessions] Sesiones encontradas: ${sessions.length}`);
     } else {
       return NextResponse.json(
         { error: 'No tienes permisos para ver sesiones de time' },

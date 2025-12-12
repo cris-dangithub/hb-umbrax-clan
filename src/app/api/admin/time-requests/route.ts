@@ -5,6 +5,7 @@ import { getCurrentUser, hasAdminAccess } from '@/lib/get-current-user';
 import { getUserRole, UserRole } from '@/lib/roles';
 import { createAuditLog } from '@/lib/audit';
 import { hasPendingRequest, hasActiveSession } from '@/lib/time-tracking';
+import { sseEmitter } from '@/lib/sse-emitter';
 
 // Schema de validación para crear solicitud de time
 const createTimeRequestSchema = z.object({
@@ -133,6 +134,17 @@ export async function POST(request: NextRequest) {
         expiresAt: expiresAt.toISOString(),
       },
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+    });
+
+    // Emitir evento SSE al súbdito notificando que recibió una solicitud
+    sseEmitter.publish(`user:${subjectUser.id}`, 'time_request', {
+      requestId: timeRequest.id,
+      supervisorId: currentUser.id,
+      supervisorName: currentUser.habboName,
+      supervisorRank: currentUser.rank.name,
+      notes: validatedData.notes,
+      expiresAt: expiresAt.toISOString(),
+      timestamp: new Date().toISOString(),
     });
 
     return NextResponse.json({

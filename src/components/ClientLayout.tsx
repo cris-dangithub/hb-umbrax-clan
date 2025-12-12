@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import Navbar from './Navbar'
 import ModalManager from './ModalManager'
+import { ToastProvider } from './ToastProvider'
 import type { UserWithRank } from '@/lib/get-current-user'
 
 interface ClientLayoutProps {
@@ -22,10 +23,10 @@ export default function ClientLayout({ user, children }: ClientLayoutProps) {
   }
 
   return (
-    <>
+    <ToastProvider>
       <Navbar user={user} onOpenLogin={openLogin} onOpenRegister={openRegister} />
       {children}
       <ModalManager />
-    </>
+    </ToastProvider>
   )
 }

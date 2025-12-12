@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user';
 import { createAuditLog } from '@/lib/audit';
 import { calculateSessionTotalMinutes, getActiveSegment } from '@/lib/time-tracking';
+import { sseEmitter } from '@/lib/sse-emitter';
 
 /**
  * POST /api/admin/time-sessions/[id]/close
@@ -142,6 +143,23 @@ export async function POST(
       },
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
+
+    // Emitir evento SSE - Notificar al súbdito y supervisores
+    const supervisorIds = Array.from(
+      new Set(closedSession.segments.map(seg => seg.currentSupervisor.id))
+    );
+
+    sseEmitter.publishToMultiple(
+      [`user:${session.subjectUserId}`, ...supervisorIds.map(id => `user:${id}`)],
+      'session_closed',
+      {
+        sessionId: session.id,
+        subjectUserId: session.subjectUserId,
+        subjectName: session.subjectUser.habboName,
+        totalMinutes,
+        timestamp: now.toISOString(),
+      }
+    );
 
     return NextResponse.json({
       success: true,

@@ -19,6 +19,7 @@ model User {
   ipAddress     String   // IP capturada solo durante el registro
   rankId        Int      @default(13) // Default: Sombra Aprendiz (nuevo sistema de 13 rangos)
   isSovereign   Boolean  @default(false) // Es soberano de su rango
+  isDJ          Boolean  @default(false) // Tiene permisos de DJ para la radio
   avatarUrl     String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -37,10 +38,15 @@ model User {
   timeRequestsResponder TimeRequest[] @relation("TimeRequestResponder")
   timeSessionsSubject  TimeSession[] @relation("SessionSubject")
   timeSegmentsSupervisor TimeSegment[] @relation("SegmentSupervisor")
+  
+  // Relaciones de Radio
+  radioSessions RadioSession[]
+  songRequests  SongRequest[]
 
   @@index([rankId])
   @@index([habboNameLower])
   @@index([isSovereign])
+  @@index([isDJ])
 }
 
 model Rank {
@@ -147,6 +153,12 @@ enum AuditAction {
   TIME_SESSION_CLOSED
   TIME_SUPERVISOR_TRANSFERRED
   TIME_REQUEST_EXPIRED
+  USER_DJ_ASSIGNED
+  USER_DJ_REMOVED
+  RADIO_SESSION_CREATED
+  RADIO_SESSION_STARTED
+  RADIO_SESSION_ENDED
+  RADIO_SESSION_CANCELLED
 }
 
 model TimeRequest {
@@ -218,4 +230,90 @@ model TimeSegment {
   @@index([sessionId])
   @@index([currentSupervisorId])
   @@index([startedAt])
+}
+
+// ============================================================================
+// SISTEMA DE RADIO
+// ============================================================================
+
+model RadioSession {
+  id              String            @id @default(uuid())
+  djId            String            // DJ que conduce la sesión
+  title           String            // Título del programa
+  description     String?           @db.Text // Descripción del programa
+  streamType      RadioStreamType   // Tipo de stream (YouTube, Twitch, Icecast, Custom)
+  streamUrl       String            // URL del stream o ID del video
+  status          RadioStatus       @default(SCHEDULED)
+  scheduledStart  DateTime?         // Hora programada de inicio (opcional)
+  scheduledEnd    DateTime?         // Hora programada de fin (opcional)
+  actualStart     DateTime?         // Hora real de inicio
+  actualEnd       DateTime?         // Hora real de fin
+  playlist        Json?             // Array de canciones: [{title, artist, duration}]
+  listenerCount   Int               @default(0) // Contador de oyentes (si es Icecast)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relaciones
+  dj              User              @relation(fields: [djId], references: [id])
+  songRequests    SongRequest[]
+
+  @@index([djId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([createdAt])
+}
+
+enum RadioStreamType {
+  YOUTUBE   // Embed de YouTube
+  TWITCH    // Embed de Twitch
+  ICECAST   // Servidor Icecast propio
+  CUSTOM    // URL personalizada
+}
+
+enum RadioStatus {
+  SCHEDULED   // Programada
+  LIVE        // En vivo
+  ENDED       // Finalizada
+  CANCELLED   // Cancelada
+}
+
+model SongRequest {
+  id              String              @id @default(uuid())
+  sessionId       String              // Sesión de radio
+  requestedById   String              // Usuario que solicita
+  songTitle       String              // Título de la canción
+  artist          String?             // Artista
+  status          SongRequestStatus   @default(PENDING)
+  message         String?             @db.Text // Mensaje opcional del usuario
+  respondedAt     DateTime?
+  createdAt       DateTime            @default(now())
+
+  // Relaciones
+  session         RadioSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  requestedBy     User                @relation(fields: [requestedById], references: [id])
+
+  @@index([sessionId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum SongRequestStatus {
+  PENDING   // Pendiente
+  ACCEPTED  // Aceptada
+  REJECTED  // Rechazada
+  PLAYED    // Reproducida
+}
+
+model RadioConfig {
+  id                  String    @id @default(uuid())
+  icecastEnabled      Boolean   @default(false) // Si está habilitado Icecast
+  icecastServerUrl    String?   // URL del servidor Icecast
+  icecastAdminUser    String?   // Usuario admin de Icecast
+  icecastAdminPass    String?   // Password admin de Icecast (encriptado)
+  maxConcurrentDJs    Int       @default(1) // Número máximo de DJs en vivo simultáneos
+  requestsEnabled     Boolean   @default(true) // Si las solicitudes de canciones están habilitadas
+  updatedAt           DateTime  @updatedAt
+
+  @@map("radio_config")
 }

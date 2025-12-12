@@ -1,10 +1,10 @@
 import { getCurrentUser } from '@/lib/get-current-user'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import HabboAvatar from '@/components/HabboAvatar'
+import UserProfileCard from '@/components/UserProfileCard'
 import TimeRequestsCard from '@/components/TimeRequestsCard'
 import ActiveTimesTable from '@/components/ActiveTimesTable'
-import { getUserTotalTimeMinutes, formatMinutesToReadable } from '@/lib/time-tracking'
+import { getUserTotalTimeMinutes } from '@/lib/time-tracking'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,66 +32,14 @@ export default async function DashboardPage() {
           }}
         >
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 sm:justify-between">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
-              {/* Avatar */}
-              <div
-                className="p-2 sm:p-3 rounded-lg flex-shrink-0"
-                style={{
-                  backgroundColor: 'rgba(74, 12, 17, 0.3)',
-                  border: '2px solid #CC933B',
-                }}
-              >
-                <HabboAvatar
-                  src={user.avatarUrl}
-                  alt={user.habboName}
-                  size={80}
-                  className="sm:w-20 sm:h-32"
-                />
-              </div>
-
-              {/* Info del usuario */}
-              <div className="text-center sm:text-left">
-                <h1
-                  className="text-lg sm:text-xl lg:text-2xl mb-1 sm:mb-2 break-words"
-                  style={{
-                    fontFamily: '"Press Start 2P", cursive',
-                    color: '#CC933B',
-                  }}
-                >
-                  {user.habboName}
-                </h1>
-                <p
-                  className="text-base sm:text-lg"
-                  style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    color: '#ededed',
-                  }}
-                >
-                  {user.rank.name}
-                </p>
-                <p
-                  className="text-sm"
-                  style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    color: '#CC933B',
-                  }}
-                >
-                  Orden Jerárquico: {user.rank.order}/10
-                </p>
-                {totalMinutes > 0 && (
-                  <p
-                    className="text-sm mt-1"
-                    style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      color: '#22c55e',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    ⏱️ Tiempo Total: {formatMinutesToReadable(totalMinutes)}
-                  </p>
-                )}
-              </div>
-            </div>
+            <UserProfileCard
+              userId={user.id}
+              habboName={user.habboName}
+              avatarUrl={user.avatarUrl}
+              rankName={user.rank.name}
+              rankOrder={user.rank.order}
+              initialTotalMinutes={totalMinutes}
+            />
 
             {/* Botón de logout */}
             <form action="/api/auth/logout" method="POST" className="w-full sm:w-auto">

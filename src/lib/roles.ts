@@ -115,6 +115,27 @@ export function isAuthenticated(user?: UserWithRank | null): boolean {
 }
 
 /**
+ * Verifica si un usuario es DJ (tiene permisos para gestionar la radio)
+ * 
+ * @param user - Usuario a verificar
+ * @returns true si es DJ, false en caso contrario
+ */
+export function isDJ(user?: UserWithRank | null): boolean {
+  return user?.isDJ ?? false
+}
+
+/**
+ * Verifica si un usuario tiene permisos de DJ o es Cúpula
+ * La Cúpula tiene acceso completo al sistema de radio
+ * 
+ * @param user - Usuario a verificar
+ * @returns true si puede gestionar la radio
+ */
+export function canManageRadio(user?: UserWithRank | null): boolean {
+  return isCupula(user) || isDJ(user)
+}
+
+/**
  * Obtiene un nombre legible del rol
  * 
  * @param role - Rol a convertir
@@ -156,9 +177,17 @@ export type PermissionAction =
   | 'assign_sovereign'
   | 'create_news'
   | 'create_events'
+  | 'create_radio_session'
+  | 'start_radio_session'
+  | 'end_radio_session'
+  | 'manage_playlist'
+  | 'moderate_song_requests'
+  | 'assign_dj_role'
+  | 'view_radio_analytics'
 
 export function can(user: UserWithRank | null | undefined, action: PermissionAction): boolean {
   const role = getUserRole(user)
+  const isUserDJ = isDJ(user)
 
   // Permisos por acción
   const permissions: Record<PermissionAction, UserRole[]> = {
@@ -169,7 +198,31 @@ export function can(user: UserWithRank | null | undefined, action: PermissionAct
     view_audit_logs: [UserRole.CUPULA, UserRole.SOBERANO],
     assign_sovereign: [UserRole.CUPULA], // Solo Cúpula puede asignar soberanos
     create_news: [UserRole.CUPULA, UserRole.SOBERANO],
-    create_events: [UserRole.CUPULA, UserRole.SOBERANO]
+    create_events: [UserRole.CUPULA, UserRole.SOBERANO],
+    // Permisos de radio: Cúpula siempre tiene acceso, DJs tienen acceso según su rol
+    create_radio_session: [UserRole.CUPULA], // Solo Cúpula y DJs pueden crear sesiones
+    start_radio_session: [UserRole.CUPULA], // Solo Cúpula y DJs pueden iniciar
+    end_radio_session: [UserRole.CUPULA], // Solo Cúpula y DJs pueden finalizar
+    manage_playlist: [UserRole.CUPULA], // Solo Cúpula y DJs pueden gestionar playlist
+    moderate_song_requests: [UserRole.CUPULA], // Solo Cúpula y DJs pueden moderar
+    assign_dj_role: [UserRole.CUPULA], // Solo Cúpula puede asignar rol DJ
+    view_radio_analytics: [UserRole.CUPULA] // Solo Cúpula puede ver analytics
+  }
+
+  // Cúpula siempre tiene acceso a todo
+  if (role === UserRole.CUPULA) {
+    return true
+  }
+
+  // DJs tienen acceso especial a acciones de radio (excepto assign_dj_role y view_radio_analytics)
+  if (isUserDJ && [
+    'create_radio_session',
+    'start_radio_session', 
+    'end_radio_session',
+    'manage_playlist',
+    'moderate_song_requests'
+  ].includes(action)) {
+    return true
   }
 
   return permissions[action]?.includes(role) ?? false

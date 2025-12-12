@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import HabboAvatar from './HabboAvatar'
+import { useToast } from './ToastProvider'
 
 interface TimeRequest {
   id: string
@@ -41,32 +42,132 @@ export default function TimeRequestsCard({
   const [requests, setRequests] = useState<TimeRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [responding, setResponding] = useState<string | null>(null)
+  const [, setTick] = useState(0)
+  const { showToast } = useToast()
 
   // Súbditos (rangos 4-13 sin isSovereign) pueden ver sus propias solicitudes
   // Soberanos y Cúpula pueden ver solicitudes según su alcance
   const canViewTimeRequests = rankOrder >= 4; // Todos los rangos 4-13 + Cúpula (1-3)
 
-  // Fetch solicitudes pendientes cada 5 segundos
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await fetch('/api/admin/time-requests?onlyPending=true')
-        if (response.ok) {
-          const data = await response.json()
-          setRequests(data.timeRequests || [])
-        }
-      } catch (error) {
-        console.error('Error fetching time requests:', error)
-      } finally {
-        setLoading(false)
+  // Fetch inicial de solicitudes pendientes
+  const fetchRequests = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/time-requests?onlyPending=true')
+      if (response.ok) {
+        const data = await response.json()
+        setRequests(data.timeRequests || [])
       }
+    } catch (error) {
+      console.error('Error fetching time requests:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Fetch inicial
+    fetchRequests()
+
+    // Timer local para actualizar countdown cada segundo (solo UI, sin refetch)
+    const timerInterval = setInterval(() => {
+      setTick(prev => prev + 1)
+    }, 1000)
+
+    // Conectar SSE para actualizaciones en tiempo real
+    const eventSource = new EventSource(`/api/sse/stream?topic=user:${currentUserId}`)
+    
+    eventSource.addEventListener('connected', () => {
+      console.log('[SSE TimeRequests] ✓ Conectado al stream de eventos')
+    })
+
+    eventSource.addEventListener('time_request', (e) => {
+      console.log('[SSE TimeRequests] Nueva solicitud recibida:', e.data)
+      const data = JSON.parse(e.data)
+      
+      // Mostrar notificación toast
+      showToast(
+        `Nueva solicitud de time de ${data.supervisorName}`,
+        'info',
+        7000
+      )
+      
+      // Agregar nueva solicitud a la lista
+      const newRequest: TimeRequest = {
+        id: data.requestId,
+        subjectUser: {
+          id: currentUserId,
+          habboName: '', // Se llenará en refetch
+          avatarUrl: '',
+          rank: {
+            name: '',
+            order: rankOrder
+          }
+        },
+        createdBy: {
+          id: data.supervisorId,
+          habboName: data.supervisorName
+        },
+        notes: data.notes,
+        status: 'PENDING',
+        createdAt: data.timestamp,
+        expiresAt: data.expiresAt
+      }
+      
+      // Refetch para obtener datos completos
+      fetchRequests()
+    })
+
+    eventSource.addEventListener('time_request_result', (e) => {
+      console.log('[SSE TimeRequests] Resultado de solicitud:', e.data)
+      const data = JSON.parse(e.data)
+      
+      // Actualizar estado de la solicitud para feedback visual
+      setRequests(prev => prev.map(req => 
+        req.id === data.requestId 
+          ? { ...req, status: data.status === 'approved' ? 'APPROVED' : 'REJECTED' }
+          : req
+      ))
+      
+      // Mostrar notificación toast
+      if (data.status === 'approved') {
+        showToast(
+          `✓ ${data.subjectName} aceptó tu solicitud de time`,
+          'success',
+          7000
+        )
+      } else {
+        showToast(
+          `✗ ${data.subjectName} rechazó tu solicitud de time`,
+          'error',
+          7000
+        )
+      }
+      
+      // Eliminar después de 2 segundos
+      setTimeout(() => {
+        setRequests(prev => prev.filter(r => r.id !== data.requestId))
+      }, 2000)
+    })
+
+    eventSource.addEventListener('invalidate', () => {
+      console.log('[SSE TimeRequests] Invalidación forzada, refetching...')
+      fetchRequests()
+    })
+
+    eventSource.onerror = (error) => {
+      console.error('[SSE TimeRequests] ✗ Error en conexión')
+      console.error('[SSE TimeRequests] readyState:', eventSource.readyState)
+    }
+    
+    eventSource.onopen = () => {
+      console.log('[SSE TimeRequests] ✓ Conexión abierta')
     }
 
-    fetchRequests()
-    const interval = setInterval(fetchRequests, 5000) // Poll cada 5 segundos
-
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      clearInterval(timerInterval)
+      eventSource.close()
+    }
+  }, [currentUserId, rankOrder, fetchRequests])
 
   const handleRespond = async (requestId: string, action: 'approve' | 'reject') => {
     setResponding(requestId)
@@ -78,8 +179,21 @@ export default function TimeRequestsCard({
       })
 
       if (response.ok) {
-        // Remover de la lista
-        setRequests(prev => prev.filter(r => r.id !== requestId))
+        const result = await response.json()
+        
+        // Actualizar el estado de la solicitud localmente para feedback visual inmediato
+        setRequests(prev => prev.map(req => 
+          req.id === requestId 
+            ? { ...req, status: action === 'approve' ? 'APPROVED' : 'REJECTED' }
+            : req
+        ))
+        
+        // Eliminar después de 2 segundos para dar feedback visual
+        setTimeout(() => {
+          setRequests(prev => prev.filter(r => r.id !== requestId))
+        }, 2000)
+        
+        console.log(`[TimeRequests] Solicitud ${action === 'approve' ? 'aceptada' : 'rechazada'}`)
       } else {
         const error = await response.json()
         alert(error.error || 'Error al responder solicitud')
@@ -92,8 +206,15 @@ export default function TimeRequestsCard({
     }
   }
 
-  // Filtrar solicitudes según permisos
+  // Filtrar solicitudes según permisos y eliminar expiradas
   const myRequests = requests.filter(req => {
+    // Eliminar solicitudes expiradas
+    const expiresAt = new Date(req.expiresAt)
+    const now = new Date()
+    if (expiresAt <= now) {
+      return false
+    }
+
     // Cúpula: puede ver todas las solicitudes
     if (isCupula) {
       return true;
@@ -152,11 +273,22 @@ export default function TimeRequestsCard({
           const secondsLeft = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000))
           const minutesLeft = Math.floor(secondsLeft / 60)
           const secsLeft = secondsLeft % 60
+          
+          const isApproved = request.status === 'APPROVED'
+          const isRejected = request.status === 'REJECTED'
+          const isResponded = isApproved || isRejected
 
           return (
             <div key={request.id} 
-              className="p-4 rounded-lg" 
-              style={{ backgroundColor: 'rgba(74, 12, 17, 0.3)', border: '1px solid #CC933B' }}>
+              className="p-4 rounded-lg transition-all" 
+              style={{ 
+                backgroundColor: isApproved 
+                  ? 'rgba(34, 197, 94, 0.2)' 
+                  : isRejected 
+                  ? 'rgba(239, 68, 68, 0.2)' 
+                  : 'rgba(74, 12, 17, 0.3)', 
+                border: `1px solid ${isApproved ? '#22c55e' : isRejected ? '#ef4444' : '#CC933B'}` 
+              }}>
               <div className="flex items-start gap-4">
                 <HabboAvatar 
                   src={request.subjectUser.avatarUrl} 
@@ -164,7 +296,7 @@ export default function TimeRequestsCard({
                   size={60}
                 />
                 <div className="flex-1">
-                  <p className="font-bold" style={{ color: '#CC933B' }}>
+                  <p className="font-bold" style={{ color: isApproved ? '#22c55e' : isRejected ? '#ef4444' : '#CC933B' }}>
                     {request.subjectUser.habboName}
                   </p>
                   <p className="text-sm" style={{ color: 'rgba(204, 147, 59, 0.7)' }}>
@@ -178,17 +310,23 @@ export default function TimeRequestsCard({
                       Nota: {request.notes}
                     </p>
                   )}
-                  <p className="text-xs mt-2" style={{ color: secondsLeft < 60 ? '#ef4444' : '#CC933B' }}>
-                    Expira en: {minutesLeft}:{String(secsLeft).padStart(2, '0')}
-                  </p>
+                  {isResponded ? (
+                    <p className="text-sm mt-2 font-bold" style={{ color: isApproved ? '#22c55e' : '#ef4444' }}>
+                      {isApproved ? '✓ Aceptada' : '✗ Rechazada'}
+                    </p>
+                  ) : (
+                    <p className="text-xs mt-2" style={{ color: secondsLeft < 60 ? '#ef4444' : '#CC933B' }}>
+                      Expira en: {minutesLeft}:{String(secsLeft).padStart(2, '0')}
+                    </p>
+                  )}
                 </div>
 
-                {request.subjectUser.id === currentUserId && (
+                {request.subjectUser.id === currentUserId && !isResponded && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleRespond(request.id, 'approve')}
                       disabled={responding === request.id}
-                      className="px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg transition-all disabled:opacity-50 hover:scale-105"
                       style={{ 
                         backgroundColor: '#22c55e',
                         color: 'white',
@@ -203,7 +341,7 @@ export default function TimeRequestsCard({
                     <button
                       onClick={() => handleRespond(request.id, 'reject')}
                       disabled={responding === request.id}
-                      className="px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg transition-all disabled:opacity-50 hover:scale-105"
                       style={{ 
                         backgroundColor: '#ef4444',
                         color: 'white',

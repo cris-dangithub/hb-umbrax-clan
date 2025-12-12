@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user';
 import { createAuditLog } from '@/lib/audit';
 import { getActiveSegment } from '@/lib/time-tracking';
+import { sseEmitter } from '@/lib/sse-emitter';
 
 // Schema de validación para transferir supervisor
 const transferSupervisorSchema = z.object({
@@ -167,6 +168,28 @@ export async function POST(
       },
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
+
+    // Emitir evento SSE - Notificar al súbdito y ambos supervisores
+    sseEmitter.publishToMultiple(
+      [
+        `user:${session.subjectUserId}`,
+        `user:${activeSegment.currentSupervisorId}`,
+        `user:${newSupervisor.id}`,
+      ],
+      'session_updated',
+      {
+        sessionId: session.id,
+        subjectUserId: session.subjectUserId,
+        subjectName: session.subjectUser.habboName,
+        action: 'supervisor_transferred',
+        previousSupervisorId: activeSegment.currentSupervisorId,
+        previousSupervisorName: activeSegment.currentSupervisor.habboName,
+        newSupervisorId: newSupervisor.id,
+        newSupervisorName: newSupervisor.habboName,
+        previousSegmentMinutes: segmentMinutes,
+        timestamp: now.toISOString(),
+      }
+    );
 
     return NextResponse.json({
       success: true,

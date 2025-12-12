@@ -110,7 +110,7 @@ export default function SendTimeRequestModal({
           <div className="p-4 bg-[#1a1a1a] border border-[#3b82f6]/30 rounded">
             <div className="flex items-center gap-3">
               <HabboAvatar
-                src={`https://www.habbo.com/habbo-imaging/avatarimage?user=${user.habboName}&direction=3&head_direction=3&gesture=sml&size=l`}
+                src={`https://www.habbo.es/habbo-imaging/avatarimage?user=${user.habboName}&direction=3&head_direction=3&gesture=sml&size=l`}
                 alt={user.habboName}
                 size={64}
               />
