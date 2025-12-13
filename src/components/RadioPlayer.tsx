@@ -87,7 +87,7 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
       case 'CUSTOM':
         // URL personalizada - intentar como audio
         return (
-          <div className="flex flex-col items-center justify-center h-full space-y-6">
+          <div className="flex flex-col items-center justify-center h-full space-y-6 w-full">
             <Music className="w-20 h-20 text-[#CC933B]" />
             <audio
               controls
