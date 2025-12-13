@@ -1,6 +1,7 @@
 'use client'
 
-import { Radio, Music, Users, Clock } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Radio, Music, Users, Clock, VolumeX, Music2 } from 'lucide-react'
 
 interface RadioPlayerProps {
   session: {
@@ -23,6 +24,15 @@ interface RadioPlayerProps {
 
 export default function RadioPlayer({ session }: RadioPlayerProps) {
   const isLive = session.status === 'LIVE'
+  const [isMuted, setIsMuted] = useState(true)
+  const audioRef = useRef<HTMLAudioElement>(null)
+
+  const handleUnmute = () => {
+    if (audioRef.current) {
+      audioRef.current.muted = false
+      setIsMuted(false)
+    }
+  }
 
   // Renderizar reproductor según el tipo de stream
   const renderPlayer = () => {
@@ -85,18 +95,45 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
         )
 
       case 'CUSTOM':
-        // URL personalizada - intentar como audio
+        // URL personalizada - intentar como audio con mute inicial
         return (
-          <div className="flex flex-col items-center justify-center h-full space-y-6 w-full">
-            <Music className="w-20 h-20 text-[#CC933B]" />
+          <div className="relative flex flex-col items-center justify-center h-full space-y-6 w-full">
+            {/* Reproductor de audio (oculto detrás del overlay) */}
             <audio
-              controls
+              ref={audioRef}
               autoPlay
-              className="w-full max-w-md"
+              muted
+              loop
+              className="hidden"
               src={session.streamUrl}
             >
               Tu navegador no soporta la reproducción de audio.
             </audio>
+
+            {/* Overlay para unmute */}
+            {isMuted ? (
+              <button
+                onClick={handleUnmute}
+                className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-black/70 hover:bg-black/60 transition-colors cursor-pointer z-10"
+                aria-label="Activar audio"
+              >
+                <div className="relative">
+                  <div className="absolute inset-0 bg-[#CC933B] blur-3xl opacity-30 animate-pulse" />
+                  <VolumeX className="relative w-24 h-24 text-[#CC933B]" />
+                </div>
+                <p className="text-white text-xl font-bold">Click para activar el audio</p>
+                <p className="text-gray-400 text-sm">El audio comenzará automáticamente</p>
+              </button>
+            ) : (
+              <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-[#CC933B] blur-3xl opacity-30 animate-pulse" />
+                  <Music2 className="relative w-24 h-24 text-[#CC933B] animate-bounce" />
+                </div>
+                <p className="text-white text-lg font-semibold">🎵 Reproduciendo en vivo 🎵</p>
+                <p className="text-gray-400 text-sm">Disfruta de la transmisión</p>
+              </div>
+            )}
           </div>
         )
 
