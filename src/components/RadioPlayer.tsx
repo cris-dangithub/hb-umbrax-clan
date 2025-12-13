@@ -24,13 +24,17 @@ interface RadioPlayerProps {
 
 export default function RadioPlayer({ session }: RadioPlayerProps) {
   const isLive = session.status === 'LIVE'
-  const [isMuted, setIsMuted] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
-  const handleUnmute = () => {
+  const handlePlayAudio = async () => {
     if (audioRef.current) {
-      audioRef.current.muted = false
-      setIsMuted(false)
+      try {
+        await audioRef.current.play()
+        setIsPlaying(true)
+      } catch (error) {
+        console.error('Error al reproducir audio:', error)
+      }
     }
   }
 
@@ -95,14 +99,12 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
         )
 
       case 'CUSTOM':
-        // URL personalizada - intentar como audio con mute inicial
+        // URL personalizada - iniciar reproducción al hacer click
         return (
           <div className="relative flex flex-col items-center justify-center h-full space-y-6 w-full">
             {/* Reproductor de audio (oculto detrás del overlay) */}
             <audio
               ref={audioRef}
-              autoPlay
-              muted
               loop
               className="hidden"
               src={session.streamUrl}
@@ -110,19 +112,19 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
               Tu navegador no soporta la reproducción de audio.
             </audio>
 
-            {/* Overlay para unmute */}
-            {isMuted ? (
+            {/* Overlay para iniciar reproducción */}
+            {!isPlaying ? (
               <button
-                onClick={handleUnmute}
+                onClick={handlePlayAudio}
                 className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-black/70 hover:bg-black/60 transition-colors cursor-pointer z-10"
-                aria-label="Activar audio"
+                aria-label="Reproducir audio"
               >
                 <div className="relative">
                   <div className="absolute inset-0 bg-[#CC933B] blur-3xl opacity-30 animate-pulse" />
                   <VolumeX className="relative w-24 h-24 text-[#CC933B]" />
                 </div>
                 <p className="text-white text-xl font-bold">Click para activar el audio</p>
-                <p className="text-gray-400 text-sm">El audio comenzará automáticamente</p>
+                <p className="text-gray-400 text-sm">La transmisión comenzará al instante</p>
               </button>
             ) : (
               <div className="flex flex-col items-center justify-center space-y-6">
