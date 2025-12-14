@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Radio, Music, Users, Clock, VolumeX, Music2 } from 'lucide-react'
+import { Radio, Music, Users, Clock, VolumeX, Music2, Volume2, Loader2 } from 'lucide-react'
 
 interface RadioPlayerProps {
   session: {
@@ -25,16 +25,28 @@ interface RadioPlayerProps {
 export default function RadioPlayer({ session }: RadioPlayerProps) {
   const isLive = session.status === 'LIVE'
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   const handlePlayAudio = async () => {
     if (audioRef.current) {
       try {
+        setIsLoading(true)
         await audioRef.current.play()
         setIsPlaying(true)
       } catch (error) {
         console.error('Error al reproducir audio:', error)
+      } finally {
+        setIsLoading(false)
       }
+    }
+  }
+
+  const handleToggleMute = () => {
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted
+      setIsMuted(!isMuted)
     }
   }
 
@@ -101,7 +113,7 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
       case 'CUSTOM':
         // URL personalizada - iniciar reproducción al hacer click
         return (
-          <div className="relative flex flex-col items-center justify-center h-full space-y-6 w-full">
+          <div className="relative flex flex-col items-center justify-center h-full w-full p-4">
             {/* Reproductor de audio (oculto detrás del overlay) */}
             <audio
               ref={audioRef}
@@ -112,28 +124,62 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
               Tu navegador no soporta la reproducción de audio.
             </audio>
 
-            {/* Overlay para iniciar reproducción */}
-            {!isPlaying ? (
+            {/* Estado: No iniciado */}
+            {!isPlaying && !isLoading && (
               <button
                 onClick={handlePlayAudio}
-                className="absolute inset-0 flex flex-col items-center justify-center space-y-4 bg-black/70 hover:bg-black/60 transition-colors cursor-pointer z-10"
+                className="absolute inset-0 flex flex-col items-center justify-center space-y-3 sm:space-y-4 bg-black/70 hover:bg-black/60 transition-colors cursor-pointer z-10 px-4"
                 aria-label="Reproducir audio"
               >
                 <div className="relative">
-                  <div className="absolute inset-0 bg-[#CC933B] blur-3xl opacity-30 animate-pulse" />
-                  <VolumeX className="relative w-24 h-24 text-[#CC933B]" />
+                  <div className="absolute inset-0 bg-[#CC933B] blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
+                  <VolumeX className="relative w-16 h-16 sm:w-20 md:w-24 text-[#CC933B]" />
                 </div>
-                <p className="text-white text-xl font-bold">Click para activar el audio</p>
-                <p className="text-gray-400 text-sm">La transmisión comenzará al instante</p>
+                <p className="text-white text-base sm:text-lg md:text-xl font-bold text-center">Click para activar el audio</p>
+                <p className="text-gray-400 text-xs sm:text-sm text-center">La transmisión comenzará al instante</p>
               </button>
-            ) : (
-              <div className="flex flex-col items-center justify-center space-y-6">
+            )}
+
+            {/* Estado: Cargando */}
+            {isLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center space-y-3 sm:space-y-4 bg-black/70 z-10 px-4">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-[#CC933B] blur-3xl opacity-30 animate-pulse" />
-                  <Music2 className="relative w-24 h-24 text-[#CC933B] animate-bounce" />
+                  <div className="absolute inset-0 bg-[#CC933B] blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
+                  <Loader2 className="relative w-16 h-16 sm:w-20 md:w-24 text-[#CC933B] animate-spin" />
                 </div>
-                <p className="text-white text-lg font-semibold">🎵 Reproduciendo en vivo 🎵</p>
-                <p className="text-gray-400 text-sm">Disfruta de la transmisión</p>
+                <p className="text-white text-base sm:text-lg md:text-xl font-bold text-center">Cargando transmisión...</p>
+                <p className="text-gray-400 text-xs sm:text-sm text-center">Conectando con el servidor</p>
+              </div>
+            )}
+
+            {/* Estado: Reproduciendo */}
+            {isPlaying && !isLoading && (
+              <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-6 w-full px-4">
+                {/* Ícono solo visible en sm+ */}
+                <div className="relative hidden sm:block">
+                  <div className="absolute inset-0 bg-[#CC933B] blur-2xl sm:blur-3xl opacity-30 animate-pulse" />
+                  <Music2 className="relative w-16 h-16 sm:w-20 md:w-24 text-[#CC933B] animate-bounce" />
+                </div>
+                <p className="text-white text-base sm:text-lg font-semibold text-center">🎵 Reproduciendo en vivo 🎵</p>
+                <p className="text-gray-400 text-xs sm:text-sm text-center">Disfruta de la transmisión</p>
+                {/* Botón de mute/unmute */}
+                <button
+                  onClick={handleToggleMute}
+                  className="mt-2 sm:mt-4 flex items-center space-x-2 bg-[#CC933B]/20 hover:bg-[#CC933B]/30 border border-[#CC933B]/50 rounded-lg px-3 py-2 sm:px-4 sm:py-2 transition-colors"
+                  aria-label={isMuted ? "Activar audio" : "Silenciar audio"}
+                >
+                  {isMuted ? (
+                    <>
+                      <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-[#CC933B]" />
+                      <span className="text-white text-xs sm:text-sm font-medium">Silenciado</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#CC933B]" />
+                      <span className="text-white text-xs sm:text-sm font-medium">Audio activo</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>
