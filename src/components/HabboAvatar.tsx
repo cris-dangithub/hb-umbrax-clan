@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Loader2, UserX } from 'lucide-react'
 
 interface HabboAvatarProps {
@@ -9,9 +9,17 @@ interface HabboAvatarProps {
   alt: string
   size?: number
   className?: string
+  priority?: boolean
 }
 
-export default function HabboAvatar({ src, alt, size = 64, className = '' }: HabboAvatarProps) {
+// Memoizar componente para evitar re-renders innecesarios
+const HabboAvatar = memo(function HabboAvatar({ 
+  src, 
+  alt, 
+  size = 64, 
+  className = '',
+  priority = false 
+}: HabboAvatarProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -35,6 +43,13 @@ export default function HabboAvatar({ src, alt, size = 64, className = '' }: Hab
           alt={alt}
           width={size}
           height={height}
+          // ✅ CRÍTICO: unoptimized evita que Next.js procese la imagen
+          // Las imágenes de Habbo ya están optimizadas y no cambian
+          unoptimized
+          // ✅ Priority para avatares importantes (dashboard)
+          priority={priority}
+          // ✅ Caché agresivo del navegador
+          quality={100}
           className={`rounded-lg border border-[#CC933B]/30 transition-opacity duration-300 ${
             loading ? 'opacity-0' : 'opacity-100'
           }`}
@@ -47,4 +62,6 @@ export default function HabboAvatar({ src, alt, size = 64, className = '' }: Hab
       )}
     </div>
   )
-}
+})
+
+export default HabboAvatar

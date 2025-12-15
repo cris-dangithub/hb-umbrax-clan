@@ -58,6 +58,7 @@ export default function UserProfileCard({
           alt={habboName}
           size={80}
           className="sm:w-20 sm:h-32"
+          priority={true} // ✅ Avatar principal del dashboard - prioridad alta
         />
       </div>
 

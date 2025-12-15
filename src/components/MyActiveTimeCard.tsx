@@ -291,7 +291,8 @@ export default function MyActiveTimeCard({
             <HabboAvatar 
               src={`https://www.habbo.es/habbo-imaging/avatarimage?user=${activeSession.currentSupervisor.habboName}&size=m`}
               alt={activeSession.currentSupervisor.habboName}
-              size={40} 
+              size={40}
+              priority={true} // ✅ Avatar visible en dashboard activo
             />
             <div>
               <p 

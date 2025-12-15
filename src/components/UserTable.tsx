@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Search, ChevronLeft, ChevronRight, Loader2, Crown, Star } from 'lucide-react'
 import HabboAvatar from './HabboAvatar'
 import ActionDropdown from './ActionDropdown'
@@ -350,7 +350,13 @@ export default function UserTable() {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <HabboAvatar src={user.avatarUrl} alt={user.habboName} size={48} />
+                      {/* ✅ Sin priority - estos avatares están fuera del viewport inicial */}
+                      <HabboAvatar 
+                        src={user.avatarUrl} 
+                        alt={user.habboName} 
+                        size={48}
+                        priority={false}
+                      />
                       <span
                         style={{
                           fontFamily: 'Rajdhani, sans-serif',
