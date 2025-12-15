@@ -95,16 +95,17 @@ export default function TimeRequestsCard({
           7000
         )
         
-        // Agregar nueva solicitud a la lista
+        // ✅ Agregar solicitud directamente con datos completos del WebSocket
+        // No necesita refetch - el evento ya trae toda la información
         const newRequest: TimeRequest = {
           id: eventData.requestId,
           subjectUser: {
-            id: currentUserId,
-            habboName: '', // Se llenará en refetch
-            avatarUrl: '',
+            id: eventData.subjectUserId,
+            habboName: eventData.subjectName,
+            avatarUrl: eventData.subjectAvatarUrl,
             rank: {
-              name: '',
-              order: rankOrder
+              name: eventData.subjectRank,
+              order: eventData.subjectRankOrder
             }
           },
           createdBy: {
@@ -112,13 +113,13 @@ export default function TimeRequestsCard({
             habboName: eventData.supervisorName
           },
           notes: eventData.notes,
-          status: 'PENDING',
-          createdAt: eventData.timestamp,
+          status: eventData.status,
+          createdAt: eventData.createdAt,
           expiresAt: eventData.expiresAt
         }
         
-        // Refetch para obtener datos completos
-        fetchRequests()
+        // ✅ Agregar al inicio de la lista sin refetch (actualización instantánea)
+        setRequests(prev => [newRequest, ...prev])
       },
       'time_request_result': (data) => {
         const eventData = data as TimeRequestResultEventData

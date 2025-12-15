@@ -137,12 +137,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Emitir evento WebSocket al súbdito notificando que recibió una solicitud
+    // Incluye datos completos para evitar refetch en el frontend
     await websocketClient.publish(`user:${subjectUser.id}`, 'time_request', {
       requestId: timeRequest.id,
       supervisorId: currentUser.id,
       supervisorName: currentUser.habboName,
       supervisorRank: currentUser.rank.name,
+      supervisorAvatarUrl: currentUser.avatarUrl,
+      subjectUserId: subjectUser.id,
+      subjectName: subjectUser.habboName,
+      subjectAvatarUrl: subjectUser.avatarUrl,
+      subjectRank: subjectUser.rank.name,
+      subjectRankOrder: subjectUser.rank.order,
       notes: validatedData.notes,
+      status: 'PENDING',
+      createdAt: timeRequest.createdAt.toISOString(),
       expiresAt: expiresAt.toISOString(),
       timestamp: new Date().toISOString(),
     });

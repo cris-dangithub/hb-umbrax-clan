@@ -31,7 +31,15 @@ export interface TimeRequestEventData {
   supervisorId: string;
   supervisorName: string;
   supervisorRank: string;
+  supervisorAvatarUrl: string;
+  subjectUserId: string;
+  subjectName: string;
+  subjectAvatarUrl: string;
+  subjectRank: string;
+  subjectRankOrder: number;
   notes?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+  createdAt: string;
   expiresAt: string;
   timestamp: string;
 }
@@ -58,7 +66,10 @@ export interface SessionUpdatedEventData {
   subjectName: string;
   action: 'supervisor_transferred' | 'other';
   previousSupervisorId?: string;
+  previousSupervisorName?: string;
   newSupervisorId?: string;
+  newSupervisorName?: string;
+  previousSegmentMinutes?: number;
   timestamp: string;
 }
 
