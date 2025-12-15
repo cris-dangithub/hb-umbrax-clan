@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: 'www.habbo.es',
         pathname: '/habbo-imaging/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.habbo.com',
+        pathname: '/habbo-imaging/**',
+      },
     ],
   },
 };

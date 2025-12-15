@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             habboName: true,
+            avatarUrl: true,
             rank: true,
           },
         },
@@ -236,6 +237,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             habboName: true,
+            avatarUrl: true,
             rank: true,
           },
         },

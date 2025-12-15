@@ -164,23 +164,55 @@ export async function PATCH(
     if (isApproved && sessionId) {
       console.log(`[TimeRequest] Emitiendo eventos WebSocket para sesión ${sessionId}`);
       
-      // Notificar al súbdito que su sesión fue creada
-      console.log(`[TimeRequest] Emitiendo session_created a user:${currentUser.id} (súbdito)`);
-      await websocketClient.publish(`user:${currentUser.id}`, 'session_created', {
+      // Obtener la sesión completa con todos los datos para evitar refetch en frontend
+      const fullSession = await prisma.timeSession.findUnique({
+        where: { id: sessionId },
+        include: {
+          subjectUser: {
+            include: {
+              rank: true,
+            },
+          },
+          segments: {
+            where: { endedAt: null },
+            include: {
+              currentSupervisor: {
+                include: {
+                  rank: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!fullSession) {
+        throw new Error('No se pudo obtener la sesión creada');
+      }
+
+      // Payload completo para evitar refetch en ActiveTimesTable
+      const sessionCreatedPayload = {
         sessionId,
         subjectUserId: currentUser.id,
+        subjectName: currentUser.habboName,
+        subjectAvatarUrl: currentUser.avatarUrl,
+        subjectRank: currentUser.rank.name,
+        subjectRankOrder: currentUser.rank.order,
+        subjectRankMissionGoal: currentUser.rank.missionPromotionGoal,
         supervisorId: timeRequest.createdById,
+        supervisorName: timeRequest.createdBy.habboName,
+        supervisorRank: timeRequest.createdBy.rank?.name || 'Desconocido',
+        startedAt: fullSession.startedAt.toISOString(),
         timestamp: now.toISOString(),
-      });
+      };
+      
+      // Notificar al súbdito que su sesión fue creada
+      console.log(`[TimeRequest] Emitiendo session_created a user:${currentUser.id} (súbdito)`);
+      await websocketClient.publish(`user:${currentUser.id}`, 'session_created', sessionCreatedPayload);
 
       // Notificar al supervisor que la sesión fue creada (para actualizar ActiveTimesTable)
       console.log(`[TimeRequest] Emitiendo session_created a user:${timeRequest.createdById} (supervisor)`);
-      await websocketClient.publish(`user:${timeRequest.createdById}`, 'session_created', {
-        sessionId,
-        subjectUserId: currentUser.id,
-        supervisorId: timeRequest.createdById,
-        timestamp: now.toISOString(),
-      });
+      await websocketClient.publish(`user:${timeRequest.createdById}`, 'session_created', sessionCreatedPayload);
 
       // Notificar al supervisor que su solicitud fue aprobada
       console.log(`[TimeRequest] Emitiendo time_request_result a user:${timeRequest.createdById} (supervisor)`);

@@ -34,16 +34,17 @@ interface ActiveSession {
   } | null
 }
 
-interface ActiveTimesTableProps {
+interface SupervisorTimesTableProps {
   currentUserId: string
   isCupula: boolean
   isSovereign: boolean
 }
 
-export default function ActiveTimesTable({ 
+export default function SupervisorTimesTable({ 
   currentUserId, 
-  isCupula
-}: ActiveTimesTableProps) {
+  isCupula,
+  isSovereign
+}: SupervisorTimesTableProps) {
   const [sessions, setSessions] = useState<ActiveSession[]>([])
   const [loading, setLoading] = useState(true)
   const [closing, setClosing] = useState<string | null>(null)
@@ -75,7 +76,7 @@ export default function ActiveTimesTable({
     events: {
       'session_created': (data) => {
         const eventData = data as SessionCreatedEventData
-        console.log('[WebSocket ActiveTimesTable] Nueva sesión creada:', eventData)
+        console.log('[WebSocket SupervisorTimesTable] Nueva sesión creada:', eventData)
         
         // ✅ Agregar sesión directamente a la lista sin refetch (actualización instantánea)
         const newSession: ActiveSession = {
@@ -103,7 +104,7 @@ export default function ActiveTimesTable({
         
         // Agregar al inicio de la lista (actualización instantánea)
         setSessions(prev => [newSession, ...prev]);
-        console.log('[WebSocket ActiveTimesTable] Sesión agregada sin refetch');
+        console.log('[WebSocket SupervisorTimesTable] Sesión agregada sin refetch');
       },
       'session_updated': (data) => {
         const eventData = data as SessionUpdatedEventData
@@ -140,6 +141,11 @@ export default function ActiveTimesTable({
       clearInterval(timerInterval)
     }
   }, [fetchSessions])
+
+  // Only show for supervisors (Cúpula or Sovereign)
+  if (!isCupula && !isSovereign) {
+    return null
+  }
 
   const handlePreviewClose = (session: ActiveSession) => {
     setClosingSession(session)

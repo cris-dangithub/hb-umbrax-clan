@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import HabboAvatar from './HabboAvatar'
 import { formatMinutesToReadable } from '@/lib/time-utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -25,18 +25,6 @@ export default function UserProfileCard({
 }: UserProfileCardProps) {
   const [totalMinutes, setTotalMinutes] = useState(initialTotalMinutes)
 
-  const fetchTotalTime = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/total-time`)
-      if (response.ok) {
-        const { totalMinutes: newTotal } = await response.json()
-        setTotalMinutes(newTotal)
-      }
-    } catch (error) {
-      console.error('Error fetching total time:', error)
-    }
-  }, [userId])
-
   // WebSocket para actualizaciones de tiempo total
   useWebSocket({
     topics: [`user:${userId}`],
@@ -45,9 +33,11 @@ export default function UserProfileCard({
         const eventData = data as SessionClosedEventData
         console.log('[WS UserProfile] Sesión cerrada, actualizando tiempo total')
         
-        // Si la sesión cerrada es del usuario actual, refetch el tiempo total
+        // ✅ Actualizar tiempo total localmente sin refetch (instantáneo)
+        // El evento session_closed ya incluye totalMinutes de la sesión cerrada
         if (eventData.subjectUserId === userId) {
-          fetchTotalTime()
+          setTotalMinutes(prev => prev + eventData.totalMinutes)
+          console.log(`[WS UserProfile] Tiempo actualizado: +${eventData.totalMinutes} minutos`)
         }
       }
     }

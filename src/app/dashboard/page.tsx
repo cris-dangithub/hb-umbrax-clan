@@ -1,10 +1,11 @@
 import { getCurrentUser } from '@/lib/get-current-user'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import UserProfileCard from '@/components/UserProfileCard'
 import TimeRequestsCard from '@/components/TimeRequestsCard'
-import ActiveTimesTable from '@/components/ActiveTimesTable'
+import SupervisorTimesTable from '@/components/SupervisorTimesTable'
+import MyActiveTimeCard from '@/components/MyActiveTimeCard'
 import { getUserTotalTimeMinutes } from '@/lib/time-tracking'
+import { getActiveSession } from '@/lib/get-active-session'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,9 @@ export default async function DashboardPage() {
   // Obtener tiempo total acumulado
   const totalMinutes = await getUserTotalTimeMinutes(user.id);
 
+  // Obtener sesión activa si existe
+  const activeSession = await getActiveSession(user.id);
+
   return (
     <div className="min-h-screen pt-20 px-4 pb-4 sm:pt-24 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8" style={{ backgroundColor: '#0f0f0f' }}>
       {/* Contenedor principal */}
@@ -31,33 +35,53 @@ export default async function DashboardPage() {
             border: '2px solid #CC933B',
           }}
         >
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 sm:justify-between">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 items-start">
+            {/* User Profile - Left Column */}
+            {/* <div className="flex flex-col sm:flex-row items-center gap-4">
+              
+            </div> */}
             <UserProfileCard
-              userId={user.id}
-              habboName={user.habboName}
-              avatarUrl={user.avatarUrl}
-              rankName={user.rank.name}
-              rankOrder={user.rank.order}
-              initialTotalMinutes={totalMinutes}
-            />
+                userId={user.id}
+                habboName={user.habboName}
+                avatarUrl={user.avatarUrl}
+                rankName={user.rank.name}
+                rankOrder={user.rank.order}
+                initialTotalMinutes={totalMinutes}
+              />
 
-            {/* Botón de logout */}
-            <form action="/api/auth/logout" method="POST" className="w-full sm:w-auto">
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded font-bold transition-all hover:scale-105 text-sm sm:text-base"
-                style={{
-                  backgroundColor: 'transparent',
-                  color: '#CC933B',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  border: '2px solid #CC933B',
-                }}
-              >
-                Cerrar Sesión
-              </button>
-            </form>
+              {/* Botón de logout */}
+              <form action="/api/auth/logout" method="POST" className="w-full sm:w-auto">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2 rounded font-bold transition-all hover:scale-105 text-sm sm:text-base"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#CC933B',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    border: '2px solid #CC933B',
+                  }}
+                >
+                  Cerrar Sesión
+                </button>
+              </form>
+
+            {/* Active Time Card - Right Column (Full Width on Mobile, Spans 1 Column on Desktop) */}
+            <div className="sm:col-span-2">
+              <MyActiveTimeCard
+                userId={user.id}
+                userName={user.habboName}
+                avatarUrl={user.avatarUrl}
+                rankName={user.rank.name}
+                rankOrder={user.rank.order}
+                missionPromotionGoal={user.rank.missionPromotionGoal}
+                initialTotalMinutes={totalMinutes}
+                initialActiveSession={activeSession}
+                showBorder={false}
+              />
+            </div>
           </div>
         </div>
+        
 
         {/* Contenido principal */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -89,6 +113,7 @@ export default async function DashboardPage() {
               {user.rank.roleDescription}
             </p>
           </div>
+          
 
           {/* Card: Gestión de Reclutas (Solo para Maestro de cuchillas o superior) */}
           {/* {user.rank.order <= 9 && (
@@ -267,8 +292,8 @@ export default async function DashboardPage() {
             rankOrder={user.rank.order}
           />
 
-          {/* Active Times Table - For Supervisors (Soberanos/Cúpula) AND Súbditos with active sessions */}
-          <ActiveTimesTable
+          {/* Supervisor Times Table - For Supervisors (Soberanos/Cúpula) */}
+          <SupervisorTimesTable
             currentUserId={user.id}
             isCupula={user.rank.order <= 3}
             isSovereign={user.isSovereign || false}

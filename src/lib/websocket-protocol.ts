@@ -56,7 +56,15 @@ export interface TimeRequestResultEventData {
 export interface SessionCreatedEventData {
   sessionId: string;
   subjectUserId: string;
+  subjectName: string;
+  subjectAvatarUrl: string;
+  subjectRank: string;
+  subjectRankOrder: number;
+  subjectRankMissionGoal?: string;
   supervisorId: string;
+  supervisorName: string;
+  supervisorRank: string;
+  startedAt: string;
   timestamp: string;
 }
 

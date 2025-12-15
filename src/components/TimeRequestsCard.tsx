@@ -21,6 +21,7 @@ interface TimeRequest {
   createdBy: {
     id: string
     habboName: string
+    avatarUrl: string
   }
   notes?: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED'
@@ -110,7 +111,8 @@ export default function TimeRequestsCard({
           },
           createdBy: {
             id: eventData.supervisorId,
-            habboName: eventData.supervisorName
+            habboName: eventData.supervisorName,
+            avatarUrl: eventData.supervisorAvatarUrl
           },
           notes: eventData.notes,
           status: eventData.status,
@@ -169,8 +171,6 @@ export default function TimeRequestsCard({
       })
 
       if (response.ok) {
-        const result = await response.json()
-        
         // Actualizar el estado de la solicitud localmente para feedback visual inmediato
         setRequests(prev => prev.map(req => 
           req.id === requestId 
@@ -281,19 +281,13 @@ export default function TimeRequestsCard({
               }}>
               <div className="flex items-start gap-4">
                 <HabboAvatar 
-                  src={request.subjectUser.avatarUrl} 
-                  alt={request.subjectUser.habboName}
+                  src={request.createdBy.avatarUrl}
+                  alt={request.createdBy.habboName}
                   size={60}
                 />
                 <div className="flex-1">
                   <p className="font-bold" style={{ color: isApproved ? '#22c55e' : isRejected ? '#ef4444' : '#CC933B' }}>
-                    {request.subjectUser.habboName}
-                  </p>
-                  <p className="text-sm" style={{ color: 'rgba(204, 147, 59, 0.7)' }}>
-                    {request.subjectUser.rank.name}
-                  </p>
-                  <p className="text-sm mt-1" style={{ color: 'rgba(204, 147, 59, 0.9)' }}>
-                    Solicitado por: {request.createdBy.habboName}
+                    {request.createdBy.habboName}
                   </p>
                   {request.notes && (
                     <p className="text-sm mt-1" style={{ color: 'rgba(204, 147, 59, 0.7)' }}>
