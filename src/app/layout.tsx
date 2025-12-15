@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { getCurrentUser } from '@/lib/get-current-user'
+import { generateWsToken } from '@/lib/websocket-auth'
 import ClientLayout from '@/components/ClientLayout'
 
 // Forzar renderizado dinámico para toda la app (usa cookies/sessions)
@@ -27,13 +28,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getCurrentUser()
+  
+  // Generar token WebSocket si el usuario está autenticado
+  const wsToken = user ? generateWsToken({ userId: user.id, habboName: user.habboName }) : null
 
   return (
     <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClientLayout user={user}>
+        <ClientLayout user={user} wsToken={wsToken}>
           {children}
         </ClientLayout>
       </body>

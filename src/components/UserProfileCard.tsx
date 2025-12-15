@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import HabboAvatar from './HabboAvatar'
 import { formatMinutesToReadable } from '@/lib/time-utils'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import type { SessionClosedEventData } from '@/lib/websocket-protocol'
 
 interface UserProfileCardProps {
   userId: string
@@ -35,28 +37,21 @@ export default function UserProfileCard({
     }
   }, [userId])
 
-  useEffect(() => {
-    // Conectar SSE para actualizaciones de tiempo total
-    const eventSource = new EventSource(`/api/sse/stream?topic=user:${userId}`)
-    
-    eventSource.addEventListener('session_closed', (e) => {
-      console.log('[SSE UserProfile] Sesión cerrada, actualizando tiempo total')
-      const data = JSON.parse(e.data)
-      
-      // Si la sesión cerrada es del usuario actual, refetch el tiempo total
-      if (data.subjectUserId === userId) {
-        fetchTotalTime()
+  // WebSocket para actualizaciones de tiempo total
+  useWebSocket({
+    topics: [`user:${userId}`],
+    events: {
+      'session_closed': (data) => {
+        const eventData = data as SessionClosedEventData
+        console.log('[WS UserProfile] Sesión cerrada, actualizando tiempo total')
+        
+        // Si la sesión cerrada es del usuario actual, refetch el tiempo total
+        if (eventData.subjectUserId === userId) {
+          fetchTotalTime()
+        }
       }
-    })
-
-    eventSource.onerror = () => {
-      console.error('[SSE UserProfile] Error en conexión SSE')
     }
-
-    return () => {
-      eventSource.close()
-    }
-  }, [userId, fetchTotalTime])
+  })
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
@@ -94,7 +89,7 @@ export default function UserProfileCard({
             color: '#ededed',
           }}
         >
-          {rankName}
+          U.NOC - {rankName}
         </p>
         <p
           className="text-sm"
@@ -103,7 +98,7 @@ export default function UserProfileCard({
             color: '#CC933B',
           }}
         >
-          Orden Jerárquico: {rankOrder}/10
+          Orden Jerárquico: {rankOrder}/13
         </p>
         {totalMinutes > 0 && (
           <p

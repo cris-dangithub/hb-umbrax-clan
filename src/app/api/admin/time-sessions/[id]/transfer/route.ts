@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user';
 import { createAuditLog } from '@/lib/audit';
 import { getActiveSegment } from '@/lib/time-tracking';
-import { sseEmitter } from '@/lib/sse-emitter';
+import { websocketClient } from '@/lib/websocket-client';
 
 // Schema de validación para transferir supervisor
 const transferSupervisorSchema = z.object({
@@ -169,8 +169,8 @@ export async function POST(
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
 
-    // Emitir evento SSE - Notificar al súbdito y ambos supervisores
-    sseEmitter.publishToMultiple(
+    // Emitir evento WebSocket - Notificar al súbdito y ambos supervisores
+    await websocketClient.publishToMultiple(
       [
         `user:${session.subjectUserId}`,
         `user:${activeSegment.currentSupervisorId}`,

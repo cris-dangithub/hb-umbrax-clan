@@ -7,6 +7,8 @@ import { formatMinutesToReadable } from '@/lib/time-utils'
 import TransferTimeModal from './TransferTimeModal'
 import ConfirmationModal from './ConfirmationModal'
 import { generateConfirmationCode } from '@/lib/confirmation'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import type { SessionCreatedEventData, SessionUpdatedEventData, SessionClosedEventData } from '@/lib/websocket-protocol'
 
 interface ActiveSession {
   id: string
@@ -65,6 +67,40 @@ export default function ActiveTimesTable({
     }
   }, [])
 
+  // Configurar WebSocket para eventos en tiempo real
+  useWebSocket({
+    topics: [`user:${currentUserId}`],
+    events: {
+      'session_created': (data) => {
+        const eventData = data as SessionCreatedEventData
+        console.log('[WebSocket ActiveTimesTable] Nueva sesión creada:', eventData)
+        
+        console.log('[WebSocket ActiveTimesTable] Supervisando:', currentUserId, 'vs', eventData.supervisorId)
+        
+        // Si soy el supervisor o Cúpula, refetch inmediatamente
+        if (eventData.supervisorId === currentUserId || isCupula) {
+          console.log('[WebSocket ActiveTimesTable] Soy supervisor/Cúpula, llamando fetchSessions()...')
+          fetchSessions().then(() => {
+            console.log('[WebSocket ActiveTimesTable] fetchSessions() completado')
+          })
+        } else {
+          console.log('[WebSocket ActiveTimesTable] No soy supervisor, refetching de todos modos por si acaso')
+          fetchSessions()
+        }
+      },
+      'session_updated': (data) => {
+        const eventData = data as SessionUpdatedEventData
+        console.log('[WebSocket] Sesión actualizada:', eventData)
+        fetchSessions() // Refetch cuando hay transferencia
+      },
+      'session_closed': (data) => {
+        const eventData = data as SessionClosedEventData
+        console.log('[WebSocket] Sesión cerrada:', eventData)
+        setSessions(prev => prev.filter(s => s.id !== eventData.sessionId))
+      },
+    }
+  })
+
   useEffect(() => {
     // Fetch inicial
     fetchSessions()
@@ -74,72 +110,10 @@ export default function ActiveTimesTable({
       setTick(prev => prev + 1)
     }, 1000)
 
-    // Conectar SSE para actualizaciones en tiempo real
-    const eventSource = new EventSource(`/api/sse/stream?topic=user:${currentUserId}`)
-    
-    eventSource.addEventListener('connected', (e) => {
-      console.log('[SSE] ✓ Conectado al stream de eventos')
-      console.log('[SSE] Event data:', e)
-    })
-
-    eventSource.addEventListener('session_created', (e) => {
-      console.log('[SSE ActiveTimesTable] Nueva sesión creada:', e.data)
-      const data = JSON.parse(e.data)
-      
-      console.log('[SSE ActiveTimesTable] Supervisando:', currentUserId, 'vs', data.supervisorId)
-      
-      // Si soy el supervisor o Cúpula, refetch inmediatamente
-      if (data.supervisorId === currentUserId || isCupula) {
-        console.log('[SSE ActiveTimesTable] Soy supervisor/Cúpula, llamando fetchSessions()...')
-        fetchSessions().then(() => {
-          console.log('[SSE ActiveTimesTable] fetchSessions() completado')
-        })
-      } else {
-        console.log('[SSE ActiveTimesTable] No soy supervisor, refetching de todos modos por si acaso')
-        fetchSessions()
-      }
-    })
-
-    eventSource.addEventListener('session_updated', (e) => {
-      console.log('[SSE] Sesión actualizada:', e.data)
-      fetchSessions() // Refetch cuando hay transferencia
-    })
-
-    eventSource.addEventListener('session_closed', (e) => {
-      console.log('[SSE] Sesión cerrada:', e.data)
-      const data = JSON.parse(e.data)
-      setSessions(prev => prev.filter(s => s.id !== data.sessionId))
-    })
-
-    eventSource.addEventListener('invalidate', () => {
-      console.log('[SSE] Invalidación forzada, refetching...')
-      fetchSessions()
-    })
-
-    eventSource.onerror = (error) => {
-      console.error('[SSE] ✗ Error en conexión')
-      console.error('[SSE] Error type:', error.type)
-      console.error('[SSE] EventSource readyState:', eventSource.readyState)
-      console.error('[SSE] EventSource url:', eventSource.url)
-      
-      // Estados: 0=CONNECTING, 1=OPEN, 2=CLOSED
-      if (eventSource.readyState === EventSource.CLOSED) {
-        console.error('[SSE] Conexión cerrada, EventSource intentará reconectar automáticamente')
-      } else if (eventSource.readyState === EventSource.CONNECTING) {
-        console.log('[SSE] Reconectando...')
-      }
-      // EventSource auto-reconecta, no necesitamos hacer nada
-    }
-    
-    eventSource.onopen = () => {
-      console.log('[SSE] ✓ Conexión abierta, esperando eventos...')
-    }
-
     return () => {
       clearInterval(timerInterval)
-      eventSource.close()
     }
-  }, [currentUserId, isCupula, fetchSessions])
+  }, [fetchSessions])
 
   const handlePreviewClose = (session: ActiveSession) => {
     setClosingSession(session)

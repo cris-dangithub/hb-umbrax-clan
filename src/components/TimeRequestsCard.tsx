@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import HabboAvatar from './HabboAvatar'
 import { useToast } from './ToastProvider'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import type { TimeRequestEventData, TimeRequestResultEventData } from '@/lib/websocket-protocol'
 
 interface TimeRequest {
   id: string
@@ -73,101 +75,88 @@ export default function TimeRequestsCard({
       setTick(prev => prev + 1)
     }, 1000)
 
-    // Conectar SSE para actualizaciones en tiempo real
-    const eventSource = new EventSource(`/api/sse/stream?topic=user:${currentUserId}`)
-    
-    eventSource.addEventListener('connected', () => {
-      console.log('[SSE TimeRequests] ✓ Conectado al stream de eventos')
-    })
-
-    eventSource.addEventListener('time_request', (e) => {
-      console.log('[SSE TimeRequests] Nueva solicitud recibida:', e.data)
-      const data = JSON.parse(e.data)
-      
-      // Mostrar notificación toast
-      showToast(
-        `Nueva solicitud de time de ${data.supervisorName}`,
-        'info',
-        7000
-      )
-      
-      // Agregar nueva solicitud a la lista
-      const newRequest: TimeRequest = {
-        id: data.requestId,
-        subjectUser: {
-          id: currentUserId,
-          habboName: '', // Se llenará en refetch
-          avatarUrl: '',
-          rank: {
-            name: '',
-            order: rankOrder
-          }
-        },
-        createdBy: {
-          id: data.supervisorId,
-          habboName: data.supervisorName
-        },
-        notes: data.notes,
-        status: 'PENDING',
-        createdAt: data.timestamp,
-        expiresAt: data.expiresAt
-      }
-      
-      // Refetch para obtener datos completos
-      fetchRequests()
-    })
-
-    eventSource.addEventListener('time_request_result', (e) => {
-      console.log('[SSE TimeRequests] Resultado de solicitud:', e.data)
-      const data = JSON.parse(e.data)
-      
-      // Actualizar estado de la solicitud para feedback visual
-      setRequests(prev => prev.map(req => 
-        req.id === data.requestId 
-          ? { ...req, status: data.status === 'approved' ? 'APPROVED' : 'REJECTED' }
-          : req
-      ))
-      
-      // Mostrar notificación toast
-      if (data.status === 'approved') {
-        showToast(
-          `✓ ${data.subjectName} aceptó tu solicitud de time`,
-          'success',
-          7000
-        )
-      } else {
-        showToast(
-          `✗ ${data.subjectName} rechazó tu solicitud de time`,
-          'error',
-          7000
-        )
-      }
-      
-      // Eliminar después de 2 segundos
-      setTimeout(() => {
-        setRequests(prev => prev.filter(r => r.id !== data.requestId))
-      }, 2000)
-    })
-
-    eventSource.addEventListener('invalidate', () => {
-      console.log('[SSE TimeRequests] Invalidación forzada, refetching...')
-      fetchRequests()
-    })
-
-    eventSource.onerror = (error) => {
-      console.error('[SSE TimeRequests] ✗ Error en conexión')
-      console.error('[SSE TimeRequests] readyState:', eventSource.readyState)
-    }
-    
-    eventSource.onopen = () => {
-      console.log('[SSE TimeRequests] ✓ Conexión abierta')
-    }
-
     return () => {
       clearInterval(timerInterval)
-      eventSource.close()
     }
-  }, [currentUserId, rankOrder, fetchRequests])
+  }, [fetchRequests])
+
+  // WebSocket para actualizaciones en tiempo real
+  useWebSocket({
+    topics: [`user:${currentUserId}`],
+    events: {
+      'time_request': (data) => {
+        const eventData = data as TimeRequestEventData
+        console.log('[WS TimeRequests] Nueva solicitud recibida:', eventData)
+        
+        // Mostrar notificación toast
+        showToast(
+          `Nueva solicitud de time de ${eventData.supervisorName}`,
+          'info',
+          7000
+        )
+        
+        // Agregar nueva solicitud a la lista
+        const newRequest: TimeRequest = {
+          id: eventData.requestId,
+          subjectUser: {
+            id: currentUserId,
+            habboName: '', // Se llenará en refetch
+            avatarUrl: '',
+            rank: {
+              name: '',
+              order: rankOrder
+            }
+          },
+          createdBy: {
+            id: eventData.supervisorId,
+            habboName: eventData.supervisorName
+          },
+          notes: eventData.notes,
+          status: 'PENDING',
+          createdAt: eventData.timestamp,
+          expiresAt: eventData.expiresAt
+        }
+        
+        // Refetch para obtener datos completos
+        fetchRequests()
+      },
+      'time_request_result': (data) => {
+        const eventData = data as TimeRequestResultEventData
+        console.log('[WS TimeRequests] Resultado de solicitud:', eventData)
+        
+        // Actualizar estado de la solicitud para feedback visual
+        setRequests(prev => prev.map(req => 
+          req.id === eventData.requestId 
+            ? { ...req, status: eventData.status === 'approved' ? 'APPROVED' : 'REJECTED' }
+            : req
+        ))
+        
+        // Mostrar notificación toast
+        if (eventData.status === 'approved') {
+          showToast(
+            `✓ ${eventData.subjectName} aceptó tu solicitud de time`,
+            'success',
+            7000
+          )
+        } else {
+          showToast(
+            `✗ ${eventData.subjectName} rechazó tu solicitud de time`,
+            'error',
+            7000
+          )
+        }
+        
+        // Eliminar después de 2 segundos
+        setTimeout(() => {
+          setRequests(prev => prev.filter(r => r.id !== eventData.requestId))
+        }, 2000)
+      },
+      'invalidate': () => {
+        console.log('[WS TimeRequests] Invalidación forzada, refetching...')
+        fetchRequests()
+      }
+    }
+  })
 
   const handleRespond = async (requestId: string, action: 'approve' | 'reject') => {
     setResponding(requestId)

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Radio, Music, Users, Clock, VolumeX, Music2, Volume2, Loader2 } from 'lucide-react'
+import HabboAvatar from './HabboAvatar'
 
 interface RadioPlayerProps {
   session: {
@@ -201,10 +202,10 @@ export default function RadioPlayer({ session }: RadioPlayerProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Avatar del DJ */}
-            <img
+            <HabboAvatar
               src={session.dj.avatarUrl}
               alt={session.dj.habboName}
-              className="w-12 h-12 rounded-lg border-2 border-[#CC933B]"
+              size={30}
             />
             <div>
               <div className="flex items-center space-x-2">

@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card: Gestión de Reclutas (Solo para Maestro de cuchillas o superior) */}
-          {user.rank.order <= 9 && (
+          {/* {user.rank.order <= 9 && (
             <div
               className="backdrop-blur-md rounded-lg shadow-2xl p-4 sm:p-6"
               style={{
@@ -130,10 +130,10 @@ export default async function DashboardPage() {
                 </button>
               </Link>
             </div>
-          )}
+          )} */}
 
           {/* Card: Crear Evento/Noticia (Solo para Embajador o superior) */}
-          {user.rank.order <= 3 && (
+          {/* {user.rank.order <= 3 && (
             <div
               className="backdrop-blur-md rounded-lg shadow-2xl p-4 sm:p-6"
               style={{
@@ -172,10 +172,10 @@ export default async function DashboardPage() {
                 </button>
               </Link>
             </div>
-          )}
+          )} */}
 
         {/* Card: Administración (Cúpula y Soberanos) */}
-        {(user.rank.order <= 3 || user.isSovereign) && (
+        {/* {(user.rank.order <= 3 || user.isSovereign) && (
             <div
               className="backdrop-blur-md rounded-lg shadow-2xl p-4 sm:p-6"
               style={{
@@ -214,10 +214,10 @@ export default async function DashboardPage() {
                 </button>
               </Link>
             </div>
-          )}
+          )} */}
 
           {/* Card: Información General (Todos los rangos) */}
-          <div
+          {/* <div
             className="backdrop-blur-md rounded-lg shadow-2xl p-4 sm:p-6"
             style={{
               backgroundColor: 'rgba(15, 15, 15, 0.8)',
@@ -254,7 +254,7 @@ export default async function DashboardPage() {
                 Ver Noticias
               </button>
             </Link>
-          </div>
+          </div> */}
         </div>
 
         {/* Time Tracking Section */}

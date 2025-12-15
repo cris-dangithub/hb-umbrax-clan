@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { loginSchema } from '@/schemas/auth'
 import { verifyPassword } from '@/lib/auth'
 import { createSession } from '@/lib/session'
+import { generateWsToken } from '@/lib/websocket-auth'
 
 // ============================================
 // POST /api/auth/login
@@ -81,7 +82,15 @@ export async function POST(request: NextRequest) {
     await createSession(user.id, user.habboName)
 
     // ============================================
-    // 5. Responder con éxito (sin incluir password)
+    // 5. Generar token WebSocket
+    // ============================================
+    const wsToken = generateWsToken({
+      userId: user.id,
+      habboName: user.habboName,
+    })
+
+    // ============================================
+    // 6. Responder con éxito (sin incluir password)
     // ============================================
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user
@@ -90,6 +99,7 @@ export async function POST(request: NextRequest) {
       {
         message: '¡Bienvenido de vuelta a UMBRAX CLAN!',
         user: userWithoutPassword,
+        wsToken, // Token para WebSocket
       },
       { status: 200 }
     )

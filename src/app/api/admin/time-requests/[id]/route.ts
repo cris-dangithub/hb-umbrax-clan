@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/get-current-user';
 import { createAuditLog } from '@/lib/audit';
-import { sseEmitter } from '@/lib/sse-emitter';
+import { websocketClient } from '@/lib/websocket-client';
 
 // Schema de validación para responder solicitud
 const respondTimeRequestSchema = z.object({
@@ -160,13 +160,13 @@ export async function PATCH(
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
 
-    // Emitir eventos SSE
+    // Emitir eventos WebSocket
     if (isApproved && sessionId) {
-      console.log(`[TimeRequest] Emitiendo eventos SSE para sesión ${sessionId}`);
+      console.log(`[TimeRequest] Emitiendo eventos WebSocket para sesión ${sessionId}`);
       
       // Notificar al súbdito que su sesión fue creada
       console.log(`[TimeRequest] Emitiendo session_created a user:${currentUser.id} (súbdito)`);
-      sseEmitter.publish(`user:${currentUser.id}`, 'session_created', {
+      await websocketClient.publish(`user:${currentUser.id}`, 'session_created', {
         sessionId,
         subjectUserId: currentUser.id,
         supervisorId: timeRequest.createdById,
@@ -175,7 +175,7 @@ export async function PATCH(
 
       // Notificar al supervisor que la sesión fue creada (para actualizar ActiveTimesTable)
       console.log(`[TimeRequest] Emitiendo session_created a user:${timeRequest.createdById} (supervisor)`);
-      sseEmitter.publish(`user:${timeRequest.createdById}`, 'session_created', {
+      await websocketClient.publish(`user:${timeRequest.createdById}`, 'session_created', {
         sessionId,
         subjectUserId: currentUser.id,
         supervisorId: timeRequest.createdById,
@@ -184,7 +184,7 @@ export async function PATCH(
 
       // Notificar al supervisor que su solicitud fue aprobada
       console.log(`[TimeRequest] Emitiendo time_request_result a user:${timeRequest.createdById} (supervisor)`);
-      sseEmitter.publish(`user:${timeRequest.createdById}`, 'time_request_result', {
+      await websocketClient.publish(`user:${timeRequest.createdById}`, 'time_request_result', {
         requestId: id,
         status: 'approved',
         subjectUserId: currentUser.id,
@@ -194,7 +194,7 @@ export async function PATCH(
       });
     } else {
       // Notificar al supervisor que su solicitud fue rechazada
-      sseEmitter.publish(`user:${timeRequest.createdById}`, 'time_request_result', {
+      await websocketClient.publish(`user:${timeRequest.createdById}`, 'time_request_result', {
         requestId: id,
         status: 'rejected',
         subjectUserId: currentUser.id,

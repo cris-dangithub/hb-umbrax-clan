@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser, hasFullAccess } from '@/lib/get-current-user';
 import { createAuditLog } from '@/lib/audit';
 import { calculateSessionTotalMinutes, getActiveSegment } from '@/lib/time-tracking';
-import { sseEmitter } from '@/lib/sse-emitter';
+import { websocketClient } from '@/lib/websocket-client';
 
 /**
  * POST /api/admin/time-sessions/[id]/close
@@ -144,12 +144,12 @@ export async function POST(
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
 
-    // Emitir evento SSE - Notificar al súbdito y supervisores
+    // Emitir evento WebSocket - Notificar al súbdito y supervisores
     const supervisorIds = Array.from(
       new Set(closedSession.segments.map(seg => seg.currentSupervisor.id))
     );
 
-    sseEmitter.publishToMultiple(
+    await websocketClient.publishToMultiple(
       [`user:${session.subjectUserId}`, ...supervisorIds.map(id => `user:${id}`)],
       'session_closed',
       {
