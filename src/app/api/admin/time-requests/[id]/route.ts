@@ -42,9 +42,8 @@ export async function PATCH(
           },
         },
         createdBy: {
-          select: {
-            id: true,
-            habboName: true,
+          include: {
+            rank: true,
           },
         },
       },
