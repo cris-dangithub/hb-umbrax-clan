@@ -6,9 +6,20 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 const createPrismaClient = () => {
+  // Verificación crítica: asegurar que DATABASE_URL existe
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      '❌ DATABASE_URL no está definida. Verifica las variables de entorno en Vercel.'
+    )
+  }
+
+  console.log('[Prisma] Inicializando con DATABASE_URL:', 
+    process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') // Ocultar password en logs
+  )
+
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    // Configuración optimizada para Neon PostgreSQL
+    // Configuración optimizada para Neon PostgreSQL en Vercel
     datasources: {
       db: {
         url: process.env.DATABASE_URL,
