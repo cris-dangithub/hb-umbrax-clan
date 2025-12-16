@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Radio, Plus, Music } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Radio, Plus, Music, LogIn, UserPlus, Lock } from 'lucide-react'
+import Link from 'next/link'
 import RadioPlayer from '@/components/RadioPlayer'
 import RadioSchedule from '@/components/RadioSchedule'
 import DJPanel from '@/components/DJPanel'
@@ -48,12 +50,21 @@ interface SongRequest {
 }
 
 export default function RadioPage() {
+  const router = useRouter()
   const [sessions, setSessions] = useState<RadioSession[]>([])
   const [currentSession, setCurrentSession] = useState<RadioSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [showRequestForm, setShowRequestForm] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
+
+  const openLogin = () => {
+    router.push('?modal=login', { scroll: false })
+  }
+
+  const openRegister = () => {
+    router.push('?modal=register', { scroll: false })
+  }
 
   // Cargar usuario actual y sesiones
   useEffect(() => {
@@ -308,6 +319,50 @@ export default function RadioPage() {
                 <Plus className="w-5 h-5" />
                 <span>Solicitar una Canción</span>
               </button>
+            )}
+
+            {/* Mensaje para usuarios no autenticados */}
+            {!currentUser && currentSession?.status === 'LIVE' && (
+              <div
+                className="w-full rounded-lg p-6 text-center border-2"
+                style={{
+                  backgroundColor: 'rgba(204, 147, 59, 0.1)',
+                  borderColor: 'rgba(204, 147, 59, 0.3)',
+                }}
+              >
+                <p
+                  className="text-lg mb-4"
+                  style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    color: '#CC933B',
+                    fontWeight: 600,
+                  }}
+                >
+                  ¿Quieres solicitar una canción?
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={openLogin}
+                    className="flex items-center justify-center space-x-2 bg-[#CC933B] hover:bg-[#b8842f] text-white font-bold px-6 py-3 rounded-lg transition-all"
+                    style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Iniciar Sesión</span>
+                  </button>
+                  <button
+                    onClick={openRegister}
+                    className="flex items-center justify-center space-x-2 bg-transparent hover:bg-[#CC933B]/10 text-[#CC933B] font-bold px-6 py-3 rounded-lg transition-all border-2 border-[#CC933B]"
+                    style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Registrarse</span>
+                  </button>
+                </div>
+              </div>
             )}
 
             {showRequestForm && currentSession && (

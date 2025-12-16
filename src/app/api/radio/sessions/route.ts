@@ -17,18 +17,10 @@ const createSessionSchema = z.object({
 /**
  * GET /api/radio/sessions
  * Obtiene todas las sesiones de radio (programadas, en vivo, finalizadas)
+ * Endpoint público - no requiere autenticación
  */
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await getCurrentUser()
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'No autenticado' },
-        { status: 401 }
-      )
-    }
-
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') as 'SCHEDULED' | 'LIVE' | 'ENDED' | 'CANCELLED' | null
     const limit = parseInt(searchParams.get('limit') || '50')

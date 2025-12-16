@@ -1,6 +1,6 @@
 'use client'
 
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, Suspense } from 'react'
 import LoginModal from './LoginModal'
 import RegisterModal from './RegisterModal'
@@ -8,6 +8,7 @@ import RegisterModal from './RegisterModal'
 function ModalManagerContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const pathname = usePathname()
   const [loginOpen, setLoginOpen] = useState(false)
   const [registerOpen, setRegisterOpen] = useState(false)
 
@@ -18,7 +19,8 @@ function ModalManagerContent() {
   }, [searchParams])
 
   const closeModal = () => {
-    router.push('/', { scroll: false })
+    // Mantener la página actual, solo remover el query param del modal
+    router.push(pathname, { scroll: false })
   }
 
   const switchToRegister = () => {

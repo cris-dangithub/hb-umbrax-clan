@@ -15,21 +15,13 @@ const updateSessionSchema = z.object({
 /**
  * GET /api/radio/sessions/[id]
  * Obtiene una sesión de radio por ID
+ * Endpoint público - no requiere autenticación
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await getCurrentUser()
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'No autenticado' },
-        { status: 401 }
-      )
-    }
-
     const { id } = await params
 
     const session = await prisma.radioSession.findUnique({

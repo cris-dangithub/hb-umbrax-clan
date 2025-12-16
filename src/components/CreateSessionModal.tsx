@@ -198,7 +198,7 @@ export default function CreateSessionModal({ isOpen, onSubmit, onClose }: Create
             <p className="text-xs text-gray-400 mt-2">
               {formData.streamType === 'YOUTUBE' && 'Ejemplo: https://youtube.com/watch?v=VIDEO_ID'}
               {formData.streamType === 'TWITCH' && 'Ejemplo: https://twitch.tv/tu_canal'}
-              {formData.streamType === 'ICECAST' && 'Ejemplo: http://tu-servidor:8000/stream'}
+              {formData.streamType === 'ICECAST' && 'Ejemplo: https://stream.umbraxclan.com/radio (URL para oyentes)'}
               {formData.streamType === 'CUSTOM' && 'URL de tu stream personalizado'}
             </p>
           </div>
